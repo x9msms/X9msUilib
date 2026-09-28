@@ -367,6 +367,73 @@ do
         return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
     end
 
+    -- แยก "การแตะ/คลิกสั้น" ออกจากการลาก/เลื่อน
+    -- (ScrollingFrame บนมือถือกลืน event คลิกอย่าง MouseButton1Click ทำให้ปุ่มกดไม่ติด)
+    local function tapGuard(input, callback, moveThreshold)
+        moveThreshold = moveThreshold or 10
+
+        local startPos = input.Position
+        local moved = false
+
+        local moveConn = userInputService.InputChanged:Connect(function(mInput)
+            if moved then return end
+
+            if mInput == input or mInput.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = mInput.Position - startPos
+                if math.abs(delta.X) > moveThreshold or math.abs(delta.Y) > moveThreshold then
+                    moved = true
+                end
+            end
+        end)
+
+        local endConn
+        endConn = input.Changed:Connect(function()
+            if input.UserInputState ~= Enum.UserInputState.End then return end
+
+            moveConn:Disconnect()
+            endConn:Disconnect()
+
+            callback(not moved)
+        end)
+    end
+
+    local function onQuickTap(object, callback, moveThreshold)
+        local consumed = {}
+
+        local function hook(target)
+            target.InputBegan:Connect(function(input)
+                if not isPrimaryInput(input) then return end
+                if consumed[input] then return end
+
+                consumed[input] = true
+
+                tapGuard(input, function(wasTap)
+                    consumed[input] = nil
+                    if wasTap then
+                        callback()
+                    end
+                end, moveThreshold)
+            end)
+        end
+
+        hook(object)
+
+        for _, desc in ipairs(object:GetDescendants()) do
+            hook(desc)
+        end
+    end
+
+    local function setScrollingEnabled(frame, enabled)
+        local p = frame.Parent
+        while p and not p:IsA("ScrollingFrame") do
+            p = p.Parent
+        end
+
+        if p then
+            p.ScrollingEnabled = enabled
+        end
+    end
+
     function main:resize()
         -- หน้าต่างขนาดคงที่แล้ว (ปรับขนาดได้จากมุมล่างขวา) ไม่ย่อ/ขยายตามเนื้อหา
     end
@@ -1500,7 +1567,7 @@ do
 
             textBoxes.finalColor.ImageColor3 = Color3.fromRGB(R, G, B)
 
-            selectors[color].slider:TweenPosition(UDim2.new(math.clamp(num / 255, 0, 0.98), 0, 0, 0), "Out", "Quad", 0.15, true)
+            selectors[color].slider.Position = UDim2.new(math.clamp(num / 255, 0, 0.98), 0, 0, 0)
 
             location[flag] = Color3.fromRGB(R, G, B)
             callback(location[flag])
@@ -1546,6 +1613,7 @@ do
                 if not connected or input ~= activeInput then return end
                 connected = false
                 activeInput = nil
+                setScrollingEnabled(container, true)
                 stop()
             end
 
@@ -1555,6 +1623,7 @@ do
 
                 activeInput = input
                 connected = true
+                setScrollingEnabled(container, false)
                 update()
 
                 input.Changed:Connect(function()
@@ -1661,10 +1730,7 @@ do
             newButton.border.frame.title.TextXAlignment = Enum.TextXAlignment.Left
         end
 
-        newButton.border.frame.InputBegan:Connect(function(input)
-            if not isPrimaryInput(input) then return end
-            callback()
-        end)
+        onQuickTap(newButton.border.frame, callback)
     end
 
     function tabs:toggle(name, options, useBind, bindOptions, callback)
@@ -1829,7 +1895,7 @@ do
                 Parent = newToggle.border.frame;
             })
 
-            bind.bindFrame.bindLabel.MouseButton1Click:Connect(function()
+            onQuickTap(bind.bindFrame.bindLabel, function()
                 library.binding = true
 
                 bind.bindFrame.bindLabel.Text = "..."
@@ -1884,9 +1950,7 @@ do
             }
         end
 
-        newToggle.border.frame.MouseButton1Click:Connect(function()
-            click()
-        end)
+        onQuickTap(newToggle.border.frame, click)
     end
 
     function tabs:slider(name, options, sliderCallback, useToggle, toggleOptions)
@@ -2038,9 +2102,7 @@ do
                 Parent = newSlider.border.frame;
             })
 
-            sliderToggle.InputBegan:Connect(function(input)
-                if not isPrimaryInput(input) then return end
-
+            onQuickTap(sliderToggle, function()
                 tLocation[tFlag] = not tLocation[tFlag]
                 tCallback(tLocation[tFlag])
                 sliderToggle.toggle:TweenSizeAndPosition((tLocation[tFlag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0), (tLocation[tFlag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0), (tLocation[tFlag] and 'Out') or 'In', (tLocation[tFlag] and 'Elastic') or 'Quad', (tLocation[tFlag] and 0.75) or 0.15, true)
@@ -2076,8 +2138,8 @@ do
                     first = false
                 end
 
-                container.sliderBar.circleBorder:TweenPosition(UDim2.new(math.clamp(percent, 0, 1), -4, 0, -4), 'Out', 'Quad', 0.15, true)
-                container.sliderBar.moveBar:TweenSize(UDim2.new(math.clamp(percent, 0, 1), -4, 0, 2), 'Out', 'Quad', 0.15, true)
+                container.sliderBar.circleBorder.Position = UDim2.new(math.clamp(percent, 0, 1), -4, 0, -4)
+                container.sliderBar.moveBar.Size = UDim2.new(math.clamp(percent, 0, 1), -4, 0, 2)
 
                 local num = min + (max - min) * percent
                 local value = math.floor(num)
@@ -2099,6 +2161,7 @@ do
             if not connected or input ~= activeInput then return end
             connected = false
             activeInput = nil
+            setScrollingEnabled(container, true)
             stop()
         end
 
@@ -2108,6 +2171,7 @@ do
 
             activeInput = input
             connected = true
+            setScrollingEnabled(container, false)
             update()
 
             input.Changed:Connect(function()
@@ -2393,22 +2457,16 @@ do
                 end
             end
 
-            listItem.InputBegan:Connect(function(input)
-                if not isPrimaryInput(input) then return end
-                switch()
-            end)
+            onQuickTap(listItem, switch)
 
             if useToggles then
             
-                toggle.InputBegan:Connect(function(input)
-                    if not isPrimaryInput(input) then return end
-                    switch()
-                end)
+                onQuickTap(toggle, switch)
 
             end
         end
 
-        button.MouseButton1Click:Connect(function()
+        onQuickTap(newDropdown.border, function()
             dropDown.toggled = not dropDown.toggled
 
             if not useToggles then
@@ -2450,16 +2508,20 @@ do
             if not isPrimaryInput(input) then return end
             if not dropDown.toggled or (isInGui(dropDown.border, input.Position) or isInGui(container.containerBorder, input.Position)) then return end
 
-            dropDown.toggled = false
+            tapGuard(input, function(wasTap)
+                if not wasTap or not dropDown.toggled then return end
 
-            if not useToggles then
-                dropDown.label.TextTransparency = 0
-                dropDown.label.Text = location[flag]
-            end
+                dropDown.toggled = false
 
-            container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
+                if not useToggles then
+                    dropDown.label.TextTransparency = 0
+                    dropDown.label.Text = location[flag]
+                end
 
-            dropDown.arrow.Rotation = 0
+                container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
+
+                dropDown.arrow.Rotation = 0
+            end)
         end)
     end
 
