@@ -383,6 +383,39 @@ do
             or input.UserInputType == Enum.UserInputType.Touch
     end
 
+    -- กด = ทำงานทันทีตอนแตะลง (ทั้งเมาส์และนิ้ว) กันยิงซ้ำ 1 ครั้งต่อการสัมผัส
+    -- บนมือถือแตะจะโดน "ชิ้นที่อยู่ชั้นบนสุด" (title/ไอคอน/ช่องติ๊ก) ที่ทับอยู่
+    -- จึงต้องผูกกับทุกชิ้นในปุ่ม ไม่งั้นต้องลากให้โดนพื้นที่ว่างถึงจะติด
+    local pressConsumed = {}
+
+    local function onPress(object, callback)
+        local function hook(target)
+            if not target:IsA("GuiObject") then return end
+
+            target.InputBegan:Connect(function(input)
+                if not isPrimaryInput(input) then return end
+                if pressConsumed[input] then return end
+
+                pressConsumed[input] = true
+                callback()
+
+                local endConn
+                endConn = userInputService.InputEnded:Connect(function(ended)
+                    if ended == input then
+                        pressConsumed[input] = nil
+                        endConn:Disconnect()
+                    end
+                end)
+            end)
+        end
+
+        hook(object)
+
+        for _, desc in ipairs(object:GetDescendants()) do
+            hook(desc)
+        end
+    end
+
     local function toGuiPosition(screenPos)
         if typeof(screenPos) == "Vector3" then
             screenPos = Vector2.new(screenPos.X, screenPos.Y)
@@ -1722,10 +1755,7 @@ do
             newButton.border.frame.title.TextXAlignment = Enum.TextXAlignment.Left
         end
 
-        newButton.border.frame.InputBegan:Connect(function(input)
-            if not isPrimaryInput(input) then return end
-            callback()
-        end)
+        onPress(newButton.border.frame, callback)
     end
 
     function tabs:toggle(name, options, useBind, bindOptions, callback)
@@ -1890,8 +1920,7 @@ do
                 Parent = newToggle.border.frame;
             })
 
-            bind.bindFrame.bindLabel.InputBegan:Connect(function(input)
-                if not isPrimaryInput(input) then return end
+            onPress(bind.bindFrame.bindLabel, function()
                 library.binding = true
 
                 bind.bindFrame.bindLabel.Text = "..."
@@ -1946,10 +1975,7 @@ do
             }
         end
 
-        newToggle.border.frame.InputBegan:Connect(function(input)
-            if not isPrimaryInput(input) then return end
-            click()
-        end)
+        onPress(newToggle.border.frame, click)
     end
 
     function tabs:slider(name, options, sliderCallback, useToggle, toggleOptions)
@@ -2101,8 +2127,7 @@ do
                 Parent = newSlider.border.frame;
             })
 
-            sliderToggle.InputBegan:Connect(function(input)
-                if not isPrimaryInput(input) then return end
+            onPress(sliderToggle, function()
                 tLocation[tFlag] = not tLocation[tFlag]
                 tCallback(tLocation[tFlag])
                 sliderToggle.toggle:TweenSizeAndPosition((tLocation[tFlag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0), (tLocation[tFlag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0), (tLocation[tFlag] and 'Out') or 'In', (tLocation[tFlag] and 'Elastic') or 'Quad', (tLocation[tFlag] and 0.75) or 0.15, true)
@@ -2470,23 +2495,16 @@ do
                 end
             end
 
-            listItem.InputBegan:Connect(function(input)
-                if not isPrimaryInput(input) then return end
-                switch()
-            end)
+            onPress(listItem, switch)
 
             if useToggles then
             
-                toggle.InputBegan:Connect(function(input)
-                    if not isPrimaryInput(input) then return end
-                    switch()
-                end)
+                onPress(toggle, switch)
 
             end
         end
 
-        newDropdown.border.InputBegan:Connect(function(input)
-            if not isPrimaryInput(input) then return end
+        onPress(newDropdown.border, function()
             dropDown.toggled = not dropDown.toggled
 
             if not useToggles then
