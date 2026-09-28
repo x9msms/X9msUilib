@@ -11,11 +11,15 @@ local library = loadstring(game:HttpGet(
 -- สร้างหน้าต่าง UI (พารามิเตอร์ที่ 2 = ไอค่อน ไม่ใส่ก็ได้)
 -- ชื่อไอค่อนดูได้ที่ https://github.com/Footagesus/Icons (lucide เป็นค่าเริ่มต้น)
 -- หน้าต่างขนาดคงที่ 392x380 — ลาก "มุมล่างขวา" เพื่อปรับขนาด (เนื้อหาในแท็บเลื่อนได้)
-local window = library:createWindow("My Script", "gamepad-2")
+local window = library:createWindow("My Script", "gamepad-2", "Dungeon: Northern Lands")  -- ชื่อ, ไอคอน, คำโปรยใต้ชื่อ
 
--- สร้างแท็บ (sections) -- แต่ละแท็บพับ/กางได้
+-- หัวข้อในแถบเมนูด้านซ้าย
+window:section("General")
+
+-- สร้างแท็บ -- แต่ละแท็บพับ/กางได้
 local main = window:newTab("Main", "house")
 local farming = window:newTab("Farming", "wheat")
+window:section("Utilities")
 local settings = window:newTab("Settings", "settings")
 
 -- ตารางเก็บค่า (ใช้ location + flag เพื่อเข้าถึงค่าภายหลัง)
@@ -61,6 +65,18 @@ farming:toggle("Speed Boost", {
     print("Speed =", value)
 end)
 
+-- Toggle สไตล์ "การ์ด" (ไอคอน + ชื่อ + คำโปรย + สวิตช์ pill แดงไล่สี) แบบในภาพ
+farming:toggle("Combat", {
+    default = true;
+    location = flags;
+    flag = "combat";
+    card = true;              -- แสดงแบบการ์ด + สวิตช์ pill
+    subtitle = "Dungeon Farming";
+    icon = "swords";
+}, false, nil, function(value)
+    print("Combat =", value)
+end)
+
 --=========================
 -- 4) Slider (เลื่อนค่า)
 --=========================
@@ -68,6 +84,7 @@ farming:slider("WalkSpeed", {
     min = 16;
     max = 200;
     default = 16;
+    step = 1;                 -- จำนวนที่เพิ่ม/ลดต่อการกดปุ่ม - / +
     location = flags;
     flag = "walkspeed";
 }, function(value)
@@ -181,11 +198,12 @@ print("weapon =", flags.weapon)
 
 --[[
     สรุป API ทั้งหมด:
-      library:createWindow(name, icon?)            -> window
+      library:createWindow(name, icon?, subtitle?)   -> window
+      window:section(name)                           -> หัวข้อในแถบเมนูด้านซ้าย
       window:newTab(name, icon?)                   -> tab
       tab:label(name, text)                        -> label (:changeText(text))
       tab:button(name, callback, icon?)
-      tab:toggle(name, options, useBind, bindOptions, callback)   -- options.icon = "..."
+      tab:toggle(name, options, useBind, bindOptions, callback)   -- options.icon / card = true (สวิตช์ pill + คำโปรย) / subtitle = "..."
       tab:slider(name, options, callback, useToggle, toggleOptions)
       tab:textbox(name, options, callback)
       tab:dropdown(name, useToggles, options, callback)           -- options.icon = "..."
