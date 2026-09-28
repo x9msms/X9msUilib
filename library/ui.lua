@@ -421,14 +421,33 @@ do
             end
         end)
 
+        local finished = false
         local endConn
-        endConn = input.Changed:Connect(function()
-            if input.UserInputState ~= Enum.UserInputState.End then return end
+        local endedConn
+
+        local function finish()
+            if finished then return end
+            finished = true
 
             moveConn:Disconnect()
-            endConn:Disconnect()
+            if endConn then endConn:Disconnect() end
+            if endedConn then endedConn:Disconnect() end
 
             callback(not moved)
+        end
+
+        endConn = input.Changed:Connect(function()
+            local state = input.UserInputState
+            if state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+                finish()
+            end
+        end)
+
+        -- สำรอง: ถ้า input.Changed ไม่ยิงตอนนิ้วยก (มือถือบางเครื่อง) ให้จับจาก event กลางแทน
+        endedConn = userInputService.InputEnded:Connect(function(ended)
+            if ended == input then
+                finish()
+            end
         end)
     end
 
@@ -517,7 +536,7 @@ do
             startPos = gui.Position
 
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
+                if input.UserInputState == Enum.UserInputState.End or input.UserInputState == Enum.UserInputState.Cancel then
                     dragging = false
                     dragInput = nil
                 end
@@ -584,7 +603,7 @@ do
             startSize = gui.AbsoluteSize
 
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
+                if input.UserInputState == Enum.UserInputState.End or input.UserInputState == Enum.UserInputState.Cancel then
                     resizing = false
                     resizeInput = nil
                 end
@@ -1664,7 +1683,16 @@ do
                 update()
 
                 input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
+                    local state = input.UserInputState
+                    if state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+                        pressEnded(input)
+                    end
+                end)
+
+                local pressEndedConn
+                pressEndedConn = userInputService.InputEnded:Connect(function(ended)
+                    if ended == input then
+                        pressEndedConn:Disconnect()
                         pressEnded(input)
                     end
                 end)
@@ -1672,6 +1700,8 @@ do
 
             container.InputBegan:Connect(pressBegan)
             container.InputEnded:Connect(pressEnded)
+            slider.InputBegan:Connect(pressBegan)
+            slider.InputEnded:Connect(pressEnded)
         end
 
         for i,v in pairs(textBoxes) do
@@ -2212,7 +2242,16 @@ do
             update()
 
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
+                local state = input.UserInputState
+                if state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+                    pressEnded(input)
+                end
+            end)
+
+            local pressEndedConn
+            pressEndedConn = userInputService.InputEnded:Connect(function(ended)
+                if ended == input then
+                    pressEndedConn:Disconnect()
                     pressEnded(input)
                 end
             end)
@@ -2220,6 +2259,10 @@ do
 
         container.InputBegan:Connect(pressBegan)
         container.InputEnded:Connect(pressEnded)
+        container.sliderBar.InputBegan:Connect(pressBegan)
+        container.sliderBar.InputEnded:Connect(pressEnded)
+        container.sliderBar.moveBar.InputBegan:Connect(pressBegan)
+        container.sliderBar.moveBar.InputEnded:Connect(pressEnded)
         container.sliderBar.circleBorder.InputBegan:Connect(pressBegan)
         container.sliderBar.circleBorder.InputEnded:Connect(pressEnded)
 
