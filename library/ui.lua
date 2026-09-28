@@ -1,9 +1,12 @@
-local PRIMARY_COLOR = Color3.fromRGB(0, 170, 255)
+local DEFAULT_THEME_COLOR = Color3.fromRGB(255, 59, 59) -- สีธีมเริ่มต้น (สีแดง)
 
 local library = {
     toggled = true;
     binding = false;
     binds = {};
+
+    themeColor = DEFAULT_THEME_COLOR;
+    themeElements = {};
 }
 
 local function createPrimaryCheck(size, position, zIndex)
@@ -11,7 +14,8 @@ local function createPrimaryCheck(size, position, zIndex)
     check.Name = "toggle"
     check.Size = size
     check.Position = position
-    check.BackgroundColor3 = PRIMARY_COLOR
+    check.BackgroundColor3 = library.themeColor
+    table.insert(library.themeElements, {obj = check, prop = "BackgroundColor3"})
     check.BorderSizePixel = 0
     check.ClipsDescendants = true
     check.ZIndex = zIndex or 1
@@ -579,7 +583,7 @@ do
             Size = UDim2.new(0, 392, 0, 380);
             Position = UDim2.new(0, 10, 0, 40);
             Image = "rbxassetid://4894670678";
-            ImageColor3 = Color3.fromRGB(15, 15, 15);
+            ImageColor3 = Color3.fromRGB(0, 0, 0);
             ImageTransparency = 0.5;
             ScaleType = Enum.ScaleType.Slice;
             SliceCenter = Rect.new(5, 5, 434, 297);
@@ -590,7 +594,7 @@ do
                 Size = UDim2.new(1, -2, 1, -2);
                 Position = UDim2.new(0, 1, 0, 1);
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(40, 40, 40);
+                ImageColor3 = Color3.fromRGB(10, 10, 10);
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 454, 297);
                 BackgroundTransparency = 1;
@@ -599,7 +603,7 @@ do
                     Size = UDim2.new(1, 0, 0, 35);
                     Position = UDim2.new(0, 0, 0, 0);
                     Image = "rbxassetid://4892463081";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 125);
                     BackgroundTransparency = 1;
@@ -620,7 +624,7 @@ do
                         Size = UDim2.new(1, 0, 0, 2);
                         Position = UDim2.new(0, 0, 1, -2);
                         BorderSizePixel = 0;
-                        BackgroundColor3 = Color3.fromRGB(35, 35, 35);
+                        BackgroundColor3 = Color3.fromRGB(28, 28, 28);
                     })
                 })
             });
@@ -629,7 +633,7 @@ do
                 Size = UDim2.new(0, 160, 1, -55);
                 Position = UDim2.new(0, 10, 0, 45);
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(33, 33, 33);
+                ImageColor3 = Color3.fromRGB(5, 5, 5);
                 ImageTransparency = 0;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -640,7 +644,7 @@ do
                     Size = UDim2.new(1, -2, 1, -2);
                     Position = UDim2.new(0, 1, 0, 1);
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     BackgroundTransparency = 1;
@@ -871,7 +875,7 @@ do
                 Position = UDim2.new(0, 0, 0, 5);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = PRIMARY_COLOR;
+                ImageColor3 = "@theme";
                 ImageTransparency = 0.35;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -881,7 +885,7 @@ do
                     Position = UDim2.new(0, 1, 0, 1);
                     BackgroundTransparency = 1;
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     ClipsDescendants = true;
@@ -957,7 +961,7 @@ do
                 Size = UDim2.new(1, 0, 0, 35);
                 Position = UDim2.new(0, 0, 0, 5);
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                ImageColor3 = Color3.fromRGB(34, 34, 34);
                 ImageTransparency = 0.5;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -968,7 +972,7 @@ do
                     Size = UDim2.new(1, -2, 1, -2);
                     Position = UDim2.new(0, 1, 0, 1);
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     BackgroundTransparency = 1;
@@ -988,7 +992,7 @@ do
                         Size = UDim2.new(0, 135, 0, 15);
                         Position = UDim2.new(0, 35, 0, 16);
                         Image = "rbxassetid://4894670678";
-                        ImageColor3 = Color3.fromRGB(25, 25, 25);
+                        ImageColor3 = Color3.fromRGB(34, 34, 34);
                         ImageTransparency = 0.5;
                         ScaleType = Enum.ScaleType.Slice;
                         SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1054,7 +1058,7 @@ do
                 Position = UDim2.new(0, 0, 0, 5);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = PRIMARY_COLOR;
+                ImageColor3 = "@theme";
                 ImageTransparency = 0.35;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1064,7 +1068,7 @@ do
                     Position = UDim2.new(0, 1, 0, 1);
                     BackgroundTransparency = 1;
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     ClipsDescendants = true;
@@ -1085,7 +1089,7 @@ do
                         Position = UDim2.new(0, 5, 0, 25);
                         BackgroundTransparency = 1;
                         Image = "rbxassetid://4894670678";
-                        ImageColor3 = Color3.fromRGB(25, 25, 25);
+                        ImageColor3 = Color3.fromRGB(34, 34, 34);
                         ImageTransparency = 0.35;
                         ScaleType = Enum.ScaleType.Slice;
                         SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1095,7 +1099,7 @@ do
                             Position = UDim2.new(0, 1, 0, 1);
                             BackgroundTransparency = 1;
                             Image = "rbxassetid://4894670678";
-                            ImageColor3 = Color3.fromRGB(40, 40, 40);
+                            ImageColor3 = Color3.fromRGB(10, 10, 10);
                             ScaleType = Enum.ScaleType.Slice;
                             SliceCenter = Rect.new(5, 5, 434, 297);
                             ClipsDescendants = true;
@@ -1115,7 +1119,7 @@ do
                                 Size = UDim2.new(0.65, 0, 0.65, 0);
                                 Position = UDim2.new(0.25/2, 0, 0.35/2, 0);
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
                                 BackgroundTransparency = 1;
@@ -1148,7 +1152,7 @@ do
                                 Position = UDim2.new(0.87, 0, 0.35/2, 0);
                                 BackgroundTransparency = 1;
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ImageTransparency = 0.35;
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1172,7 +1176,7 @@ do
                         Position = UDim2.new(0, 5, 0, 55);
                         BackgroundTransparency = 1;
                         Image = "rbxassetid://4894670678";
-                        ImageColor3 = Color3.fromRGB(25, 25, 25);
+                        ImageColor3 = Color3.fromRGB(34, 34, 34);
                         ImageTransparency = 0.35;
                         ScaleType = Enum.ScaleType.Slice;
                         SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1182,7 +1186,7 @@ do
                             Position = UDim2.new(0, 1, 0, 1);
                             BackgroundTransparency = 1;
                             Image = "rbxassetid://4894670678";
-                            ImageColor3 = Color3.fromRGB(40, 40, 40);
+                            ImageColor3 = Color3.fromRGB(10, 10, 10);
                             ScaleType = Enum.ScaleType.Slice;
                             SliceCenter = Rect.new(5, 5, 434, 297);
                             ClipsDescendants = true;
@@ -1202,7 +1206,7 @@ do
                                 Size = UDim2.new(0.65, 0, 0.65, 0);
                                 Position = UDim2.new(0.25/2, 0, 0.35/2, 0);
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
                                 BackgroundTransparency = 1;
@@ -1235,7 +1239,7 @@ do
                                 Position = UDim2.new(0.87, 0, 0.35/2, 0);
                                 BackgroundTransparency = 1;
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ImageTransparency = 0.35;
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1259,7 +1263,7 @@ do
                         Position = UDim2.new(0, 5, 0, 85);
                         BackgroundTransparency = 1;
                         Image = "rbxassetid://4894670678";
-                        ImageColor3 = Color3.fromRGB(25, 25, 25);
+                        ImageColor3 = Color3.fromRGB(34, 34, 34);
                         ImageTransparency = 0.35;
                         ScaleType = Enum.ScaleType.Slice;
                         SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1269,7 +1273,7 @@ do
                             Position = UDim2.new(0, 1, 0, 1);
                             BackgroundTransparency = 1;
                             Image = "rbxassetid://4894670678";
-                            ImageColor3 = Color3.fromRGB(40, 40, 40);
+                            ImageColor3 = Color3.fromRGB(10, 10, 10);
                             ScaleType = Enum.ScaleType.Slice;
                             SliceCenter = Rect.new(5, 5, 434, 297);
                             ClipsDescendants = true;
@@ -1289,7 +1293,7 @@ do
                                 Size = UDim2.new(0.65, 0, 0.65, 0);
                                 Position = UDim2.new(0.25/2, 0, 0.35/2, 0);
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
                                 BackgroundTransparency = 1;
@@ -1322,7 +1326,7 @@ do
                                 Position = UDim2.new(0.87, 0, 0.35/2, 0);
                                 BackgroundTransparency = 1;
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ImageTransparency = 0.35;
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1346,7 +1350,7 @@ do
                         Position = UDim2.new(0, 5, 0, 115);
                         BackgroundTransparency = 1;
                         Image = "rbxassetid://4894670678";
-                        ImageColor3 = Color3.fromRGB(25, 25, 25);
+                        ImageColor3 = Color3.fromRGB(34, 34, 34);
                         ImageTransparency = 0.35;
                         ScaleType = Enum.ScaleType.Slice;
                         SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1356,7 +1360,7 @@ do
                             Position = UDim2.new(0, 1, 0, 1);
                             BackgroundTransparency = 1;
                             Image = "rbxassetid://4894670678";
-                            ImageColor3 = Color3.fromRGB(40, 40, 40);
+                            ImageColor3 = Color3.fromRGB(10, 10, 10);
                             ScaleType = Enum.ScaleType.Slice;
                             SliceCenter = Rect.new(5, 5, 434, 297);
                             ClipsDescendants = true;
@@ -1376,7 +1380,7 @@ do
                                 Size = UDim2.new(0, 30, 0, 15);
                                 Position = UDim2.new(0, 20, 0, 4);
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ImageTransparency = 0.5;
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1420,7 +1424,7 @@ do
                                 Size = UDim2.new(0, 30, 0, 15);
                                 Position = UDim2.new(0, 68, 0, 4);
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ImageTransparency = 0.5;
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1464,7 +1468,7 @@ do
                                 Size = UDim2.new(0, 30, 0, 15);
                                 Position = UDim2.new(0, 116, 0, 4);
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ImageTransparency = 0.5;
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1498,7 +1502,7 @@ do
                                 Position = UDim2.new(0.87, 0, 0.35/2, 0);
                                 BackgroundTransparency = 1;
                                 Image = "rbxassetid://4894670678";
-                                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                                ImageColor3 = Color3.fromRGB(34, 34, 34);
                                 ImageTransparency = 0.35;
                                 ScaleType = Enum.ScaleType.Slice;
                                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1684,7 +1688,7 @@ do
                 Position = UDim2.new(0, 0, 0, 5);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = PRIMARY_COLOR;
+                ImageColor3 = "@theme";
                 ImageTransparency = 0.35;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1694,7 +1698,7 @@ do
                     Position = UDim2.new(0, 1, 0, 1);
                     BackgroundTransparency = 1;
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     ClipsDescendants = true;
@@ -1752,7 +1756,7 @@ do
                 Position = UDim2.new(0, 0, 0, 5);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                ImageColor3 = Color3.fromRGB(34, 34, 34);
                 ImageTransparency = 0.5;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1763,7 +1767,7 @@ do
                     AutoButtonColor = false;
                     BackgroundTransparency = 1;
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     ClipsDescendants = true;
@@ -1865,7 +1869,7 @@ do
                 Size = ((bindDefault and shortNames[bindDefault.Name] or name == "None") and UDim2.new(0, 50, 0, 15)) or UDim2.new(0, 30, 0, 15);
                 Position = ((bindDefault and shortNames[bindDefault.Name] or name == "None") and UDim2.new(0, 115, 0, 4)) or UDim2.new(0, 135, 0, 4);
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                ImageColor3 = Color3.fromRGB(34, 34, 34);
                 ImageTransparency = 0.5;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1973,7 +1977,7 @@ do
                 Size = UDim2.new(1, 0, 0, 45);
                 Position = UDim2.new(0, 0, 0, 5);
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                ImageColor3 = Color3.fromRGB(34, 34, 34);
                 ImageTransparency = 0.5;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -1984,7 +1988,7 @@ do
                     Size = UDim2.new(1, -2, 1, -2);
                     Position = UDim2.new(0, 1, 0, 1);
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     BackgroundTransparency = 1;
@@ -2005,7 +2009,7 @@ do
                         Size = UDim2.new(0, 35, 0, 15);
                         Position = UDim2.new(0, 155, 0, 4);
                         Image = "rbxassetid://4894670678";
-                        ImageColor3 = Color3.fromRGB(25, 25, 25);
+                        ImageColor3 = Color3.fromRGB(34, 34, 34);
                         ImageTransparency = 0.5;
                         ScaleType = Enum.ScaleType.Slice;
                         SliceCenter = Rect.new(5, 5, 434, 297);
@@ -2049,7 +2053,7 @@ do
                                 Size = UDim2.new(((sDefault - min) / (max - min)), 0, 1, 0);
                                 Position = UDim2.new(0, 0, 0, 0);
                                 BorderSizePixel = 0;
-                                BackgroundColor3 = PRIMARY_COLOR;
+                                BackgroundColor3 = "@theme";
                                 BackgroundTransparency = 0;
                             });
                             library:createElement("ImageLabel", {
@@ -2058,7 +2062,7 @@ do
                                 Position = UDim2.new(((sDefault - min) / (max - min)), 0, 0, -4);
                                 BackgroundTransparency = 1;
                                 Image = "rbxassetid://4896743658";
-                                ImageColor3 = Color3.fromRGB(100, 100, 100);
+                                ImageColor3 = "@theme";
                                 ImageTransparency = 0.3;
                                 library:createElement("ImageLabel", {
                                     Name = "circleFrame";
@@ -2263,7 +2267,7 @@ do
                 Position = UDim2.new(0, 0, 0, 5);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                ImageColor3 = Color3.fromRGB(34, 34, 34);
                 ImageTransparency = 0.5;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -2274,7 +2278,7 @@ do
                     Position = UDim2.new(0, 1, 0, 1);
                     BackgroundTransparency = 1;
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     ZIndex = 2;
@@ -2302,7 +2306,7 @@ do
             Position = UDim2.new(1, -25, 0, 10);
             BackgroundTransparency = 1;
             Image = "rbxassetid://5882688826";
-            ImageColor3 = Color3.fromRGB(30, 30, 30);
+            ImageColor3 = Color3.fromRGB(190, 190, 190);
             ZIndex = 2;
             Parent = newDropdown.border;
         })
@@ -2320,7 +2324,7 @@ do
                 Position = UDim2.new(0.05, 0, 0, 0);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(25, 25, 25);
+                ImageColor3 = Color3.fromRGB(34, 34, 34);
                 ImageTransparency = 0.3;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
@@ -2525,6 +2529,18 @@ do
         end)
     end
 
+    function library:setTheme(color)
+        if type(color) == "string" then
+            color = Color3.fromHex(color)
+        end
+
+        self.themeColor = color
+
+        for _, entry in ipairs(self.themeElements) do
+            entry.obj[entry.prop] = color
+        end
+    end
+
     function library:createElement(class, data)
         local obj = Instance.new(class)
         
@@ -2533,6 +2549,9 @@ do
             
                 if typeof(v) == "Instance" then
                     v.Parent = obj
+                elseif v == "@theme" then
+                    obj[i] = library.themeColor
+                    table.insert(library.themeElements, {obj = obj, prop = i})
                 else
                     obj[i] = v
                 end
@@ -2583,7 +2602,7 @@ do
             Position = UDim2.new(1.1, 0, 0.87, 0);
             BackgroundTransparency = 1;
             Image = "rbxassetid://4894670678";
-            ImageColor3 = PRIMARY_COLOR;
+            ImageColor3 = "@theme";
             ImageTransparency = 0.35;
             ScaleType = Enum.ScaleType.Slice;
             SliceCenter = Rect.new(5, 5, 434, 297);
@@ -2593,7 +2612,7 @@ do
                 Position = UDim2.new(0, 1, 0, 1);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(40, 40, 40);
+                ImageColor3 = Color3.fromRGB(10, 10, 10);
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
                 ClipsDescendants = true;
@@ -2602,7 +2621,7 @@ do
                     Size = UDim2.new(1, 0, 0, 30);
                     Position = UDim2.new(0, 0, 0, 0);
                     Image = "rbxassetid://4892463081";
-                    ImageColor3 = Color3.fromRGB(50, 50, 50);
+                    ImageColor3 = Color3.fromRGB(22, 22, 22);
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 125);
                     BackgroundTransparency = 1;
@@ -2623,7 +2642,7 @@ do
                         Size = UDim2.new(1, 0, 0, 2);
                         Position = UDim2.new(0, 0, 1, -2);
                         BorderSizePixel = 0;
-                        BackgroundColor3 = Color3.fromRGB(35, 35, 35);
+                        BackgroundColor3 = Color3.fromRGB(28, 28, 28);
                     })
                 });
                 library:createElement("TextLabel", {
