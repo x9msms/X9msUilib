@@ -333,14 +333,6 @@ do
         "rbxassetid://4892463081";
     })
 
-    local originalSize
-    local originalObjectY
-    local originalContainerY
-    local dynamicContainerBottomYPos
-
-    local originalTabY
-    local originalTabContainerY
-    local dynamicTabContainerBottomYPos
 
     local tabList = {}
     local dropList = {}
@@ -376,15 +368,7 @@ do
     end
 
     function main:resize()
-        local y = 0
-
-        for i,v in pairs(self.container:GetChildren()) do
-            if not v:IsA("UIListLayout") then
-                y = y + v.AbsoluteSize.Y
-            end
-        end
-
-        self.object.Size = UDim2.new(0, 180, 0, y + 57)
+        -- หน้าต่างขนาดคงที่แล้ว (ปรับขนาดได้จากมุมล่างขวา) ไม่ย่อ/ขยายตามเนื้อหา
     end
 
     function main:getOrder()
@@ -450,10 +434,82 @@ do
         end)
     end
 
+    local RESIZE_MIN_X, RESIZE_MIN_Y = 390, 220
+
+    local function CreateResize(gui)
+        local resizing = false
+        local resizeInput
+        local resizeStart
+        local startSize
+
+        -- จุดปรับขนาดที่มุมล่างขวา (ลากได้ทั้งเมาส์และนิ้ว)
+        local handle = library:createElement("ImageLabel", {
+            Name = "resizeHandle";
+            Size = UDim2.new(0, 24, 0, 24);
+            Position = UDim2.new(1, -24, 1, -24);
+            BackgroundTransparency = 1;
+            Image = "rbxassetid://4894670678";
+            ImageColor3 = Color3.fromRGB(60, 60, 60);
+            ImageTransparency = 0.5;
+            ScaleType = Enum.ScaleType.Slice;
+            SliceCenter = Rect.new(5, 5, 434, 297);
+            ZIndex = 6;
+            Parent = gui;
+        })
+
+        for i = 0, 2 do
+            library:createElement("Frame", {
+                Name = "grip";
+                Size = UDim2.new(0, 2, 0, 8);
+                Position = UDim2.new(0, 6 + i * 5, 0, 12 - i * 5);
+                Rotation = 45;
+                BorderSizePixel = 0;
+                BackgroundColor3 = Color3.fromRGB(150, 150, 150);
+                ZIndex = 7;
+                Parent = handle;
+            })
+        end
+
+        handle.InputBegan:Connect(function(input)
+            if resizing then return end
+            if not isPrimaryInput(input) then return end
+
+            resizing = true
+            resizeInput = input
+            resizeStart = input.Position
+            startSize = gui.AbsoluteSize
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    resizing = false
+                    resizeInput = nil
+                end
+            end)
+        end)
+
+        userInputService.InputChanged:Connect(function(input)
+            if not resizing then return end
+
+            local isResizeMove = (input == resizeInput)
+                or (input.UserInputType == Enum.UserInputType.MouseMovement)
+                or (resizeInput and resizeInput.UserInputType == Enum.UserInputType.Touch and input.UserInputType == Enum.UserInputType.Touch)
+
+            if not isResizeMove then return end
+
+            local delta = input.Position - resizeStart
+
+            gui.Size = UDim2.new(
+                0, math.max(RESIZE_MIN_X, startSize.X + delta.X),
+                0, math.max(RESIZE_MIN_Y, startSize.Y + delta.Y)
+            )
+        end)
+    end
+
+
     function main:window(name, icon)
         local newWindow = library:createElement("ImageLabel", {
             Name = name;
-            Size = UDim2.new(0, 180, 0, 50);
+            Size = UDim2.new(0, 392, 0, 380);
             Position = UDim2.new(0, 10, 0, 40);
             Image = "rbxassetid://4894670678";
             ImageColor3 = Color3.fromRGB(15, 15, 15);
@@ -521,7 +577,7 @@ do
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     BackgroundTransparency = 1;
-                    ClipsDescendants = false;
+                    ClipsDescendants = true;
                     ZIndex = 3;
                     library:createElement("UIListLayout", {
                         SortOrder = 2;
@@ -547,6 +603,7 @@ do
         end
 
         CreateDrag(newWindow)
+        CreateResize(newWindow)
 
         local window = setmetatable({
             toggled = true;
@@ -618,20 +675,32 @@ do
             newTab.button.title.Size = UDim2.new(1, -64, 1, 0)
         end
 
-        local container = library:createElement("Frame", {
+        local container = library:createElement("ScrollingFrame", {
             Name = "container";
-            Size = UDim2.new(0, 200, 0, 0);
+            Size = UDim2.new(1, -190, 1, -57);
             Position = UDim2.new(0, 10, 0, 47);
             BorderSizePixel = 0;
             BackgroundTransparency = 1;
             ZIndex = 2;
+            Visible = false;
             ClipsDescendants = true;
+            ScrollingDirection = Enum.ScrollingDirection.Y;
+            ScrollBarThickness = 3;
+            ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255);
+            ScrollBarImageTransparency = 0.7;
+            CanvasSize = UDim2.new(0, 0, 0, 0);
             library:createElement("UIListLayout", {
                 Name = "list";
                 SortOrder = 2;
             });
             Parent = self.object;
         })
+
+        -- เนื้อหาในแท็บเลื่อนได้เองตามความสูง (หน้าต่างขนาดคงที่)
+        local contentLayout = container.list
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            container.CanvasSize = UDim2.new(0, 0, 0, contentLayout.AbsoluteContentSize.Y + 5)
+        end)
 
         local tab = setmetatable({
             toggled = false;
@@ -660,7 +729,6 @@ do
                             v.label.Text = v.l[v.f]
                         end
 
-                        tab.parentObject:TweenSize(UDim2.new(0, tab.parentObject.AbsoluteSize.X, 0, originalTabY), "In", "Quad", 0.15, true)
                         v.container.Parent.Parent.Parent:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
 
                         v.arrow.Rotation = 0
@@ -677,35 +745,20 @@ do
                             v.container:TweenPosition(UDim2.new(0, 10, 0, 47), "In", "Quad", 0.15, true)
                             wait(0.15)
 
-                            v.container.Size = UDim2.new(0, 200, 0, 0)
+                            v.container.Visible = false
                         end)
                     end
                 end
 
                 if tab.toggled then
-                    local y = 0
-
-                    for i,v in pairs(tab.container:GetChildren()) do
-                        if not v:IsA("UIListLayout") then
-                            y = y + v.AbsoluteSize.Y
-                        end
-                    end
-
                     tab.check:TweenSizeAndPosition(UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), "Out", "Elastic", 0.75, true)
-                    tab.parentObject:TweenSize((y == 0 and originalSize) or (y <= originalContainerY and UDim2.new(0, 392, 0, originalObjectY)) or UDim2.new(0, 392, 0, (y + originalObjectY) - originalContainerY + 3), "Out", "Quad", 0.15, true)
                     spawn(function()
                         wait(0.15)
-                    
-                        if tab.toggled then
-                    
-                            tab.container.Size = UDim2.new(0, 200, 0, y)
-                            tab.container:TweenPosition(UDim2.new(0, 180, 0, 47), "Out", "Quad", 0.15, true)
-                            wait(0.15)
 
-                            originalTabY = tab.parentObject.AbsoluteSize.Y
-                            originalTabContainerY = tab.container.AbsoluteSize.Y
-                            dynamicContainerBottomYPos = tab.parentContainer.AbsolutePosition.Y + tab.parentContainer.AbsoluteSize.Y
-                            dynamicTabContainerBottomYPos = tab.container.AbsolutePosition.Y + tab.container.AbsoluteSize.Y
+                        if tab.toggled then
+
+                            tab.container.Visible = true
+                            tab.container:TweenPosition(UDim2.new(0, 180, 0, 47), "Out", "Quad", 0.15, true)
 
                         end
                     end)
@@ -714,11 +767,10 @@ do
                     tab.container:TweenPosition(UDim2.new(0, 10, 0, 47), "In", "Quad", 0.15, true)
                     spawn(function()
                         wait(0.15)
-                        
+
                         if not tab.toggled then
-                        
-                            tab.container.Size = UDim2.new(0, 200, 0, 0)
-                            tab.parentObject:TweenSize(originalSize, "In", "Quad", 0.15, true)
+
+                            tab.container.Visible = false
 
                         end
                     end)
@@ -736,11 +788,6 @@ do
 
         self:resize()
         
-        originalSize = UDim2.new(0, self.object.AbsoluteSize.X, 0, self.object.AbsoluteSize.Y)
-        originalObjectY = self.object.AbsoluteSize.Y
-        originalContainerY = self.container.AbsoluteSize.Y
-        dynamicContainerBottomYPos = tab.parentContainer.AbsolutePosition.Y + tab.parentContainer.AbsoluteSize.Y
-        dynamicTabContainerBottomYPos = tab.container.AbsolutePosition.Y + tab.container.AbsoluteSize.Y
 
         return tab
     end
@@ -807,22 +854,9 @@ do
     function labels:changeText(text)
         self.textBox.Text = text;
 
-        local function getToggled()
-            for i,v in pairs(tabList) do
-                if self.tabObject == v.object then return v.toggled end
-            end
-
-            return false
-        end
-
         if self.textBox.TextFits then
             while self.textBox.TextFits do
                 runService.RenderStepped:Wait()
-
-                if getToggled() then
-                    self.parentObject.Size = self.parentObject.Size + UDim2.new(0, 0, 0, -10)
-                    self.container.Size = self.container.Size + UDim2.new(0, 0, 0, -10)
-                end
 
                 self.object.Size = self.object.Size + UDim2.new(0, 0, 0, -10)
                 self.object.border.Size = self.object.border.Size + UDim2.new(0, 0, 0, -10)
@@ -830,30 +864,14 @@ do
 
             self.object.Size = self.object.Size + UDim2.new(0, 0, 0, 10)
             self.object.border.Size = self.object.border.Size + UDim2.new(0, 0, 0, 10)
-
-            if getToggled() then
-                self.parentObject.Size = self.parentObject.Size + UDim2.new(0, 0, 0, 10)
-                self.container.Size = self.container.Size + UDim2.new(0, 0, 0, 10)
-            end
-
         else
             while not self.textBox.TextFits do
                 runService.RenderStepped:Wait()
-
-                if getToggled() then
-                    self.parentObject.Size = self.parentObject.Size + UDim2.new(0, 0, 0, 10)
-                    self.container.Size = self.container.Size + UDim2.new(0, 0, 0, 10)
-                end
 
                 self.object.Size = self.object.Size + UDim2.new(0, 0, 0, 10)
                 self.object.border.Size = self.object.border.Size + UDim2.new(0, 0, 0, 10)
             end
         end
-
-        if not getToggled() then return end
-
-        originalTabY = self.parentObject.AbsoluteSize.Y
-        originalTabContainerY = self.container.AbsoluteSize.Y
     end
 
     function tabs:textbox(name, options, callback)
@@ -2366,8 +2384,6 @@ do
                     button.label.TextTransparency = 0
                     button.label.Text = listItem.Text
 
-                    self.parentObject:TweenSize(UDim2.new(0, self.parentObject.AbsoluteSize.X, 0, originalTabY), "In", "Quad", 0.15, true)
-                    self.container:TweenSize(UDim2.new(0, self.container.AbsoluteSize.X, 0, originalTabContainerY), "In", "Quad", 0.15, true)
 
                     dropDown.arrow.Rotation = 0
                     container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
@@ -2426,11 +2442,6 @@ do
                 end
             end
 
-            if dynamicTabContainerBottomYPos + y > dynamicContainerBottomYPos - 7 or not dropDown.toggled then
-                self.parentObject:TweenSize(UDim2.new(0, self.parentObject.AbsoluteSize.X, 0, (dropDown.toggled and originalTabY + ((dynamicTabContainerBottomYPos + y) - dynamicContainerBottomYPos + 7)) or originalTabY), (dropDown.toggled and "Out") or "In", "Quad", 0.15, true)
-            end
-
-            self.container:TweenSize(UDim2.new(0, self.container.AbsoluteSize.X, 0, (dropDown.toggled and originalTabContainerY + y) or originalTabContainerY), (dropDown.toggled and 'Out') or 'In', 'Quad', 0.15, true)
             dropDown.arrow.Rotation = (dropDown.toggled and 180) or 0
             container:TweenSize(UDim2.new(1, 0, 0, (dropDown.toggled and y) or 0), (dropDown.toggled and "Out") or "In", "Quad", 0.15, true)
         end)
@@ -2447,8 +2458,6 @@ do
             end
 
             container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
-            self.parentObject:TweenSize(UDim2.new(0, self.parentObject.AbsoluteSize.X, 0, originalTabY), "In", "Quad", 0.15, true)
-            self.container:TweenSize(UDim2.new(0, self.container.AbsoluteSize.X, 0, originalTabContainerY), "In", "Quad", 0.15, true)
 
             dropDown.arrow.Rotation = 0
         end)
