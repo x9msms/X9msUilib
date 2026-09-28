@@ -32,6 +32,287 @@ local function createPrimaryCheck(size, position, zIndex)
     return check
 end
 
+--==================== ระบบไอค่อน (based on Footagesus/Icons — MIT License) ====================
+-- https://github.com/Footagesus/Icons
+local icons = (function()
+--============================================================
+-- icons.lua — ระบบไอค่อนสำหรับ X9msUilib
+-- Based on Footagesus/Icons (MIT License)
+-- https://github.com/Footagesus/Icons
+--
+-- API (compatible with Footagesus Icons V2):
+--   icons.SetIconsType("lucide")                 -- ตั้ง pack เริ่มต้น (lucide, solar, craft, geist, sfsymbols, gravity)
+--   icons.GetIcon("house")                       -- -> "rbxassetid://..." (lucide)
+--   icons.GetIcon("sfsymbols:HouseFill")         -- ระบุ pack:name
+--   icons.Icon2("geist:accessibility-unread")    -- -> { image, {ImageRectSize, ImageRectPosition, Parts} }
+--   icons.Image({ Icon = "house", Size = UDim2.fromOffset(24,24), Colors = {Color3} })
+--                                                -- -> { IconFrame = ImageLabel } (รองรับหลายสี/Parts)
+--   icons.AddIcons("mypack", { iconname = "rbxassetid://..." })  -- เพิ่ม pack ของตัวเอง
+--============================================================
+
+local cloneref = (cloneref or clonereference or function(instance)
+	return instance
+end)
+
+local HttpService = cloneref(game:GetService("HttpService"))
+local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
+
+local BASE_URL = "https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main"
+
+local function IsExploit()
+	return request and true or false
+end
+
+local function Get(url)
+	if IsExploit() then
+		return game:HttpGet(url)
+	end
+
+	local Success, Result = pcall(function()
+		return HttpService:GetAsync(url)
+	end)
+	if Success then
+		return Result
+	end
+
+	return ReplicatedStorage:WaitForChild("Request", 9999):InvokeServer({ Url = url })
+end
+
+local function Loadstring(src)
+	if not IsExploit() and ReplicatedStorage:FindFirstChild("Loadstring") then
+		return function()
+			return ReplicatedStorage:WaitForChild("Loadstring", 9999):InvokeServer(src)
+		end
+	end
+
+	return loadstring(src)
+end
+
+local PACKS = { "lucide", "solar", "craft", "geist", "sfsymbols", "gravity" }
+
+local IconModule = {
+	IconsType = "lucide",
+	Packs = PACKS,
+
+	New = nil,
+	IconThemeTag = nil,
+
+	Icons = {}, -- [packName] = pack data (โหลดแบบ lazy)
+}
+
+local function parseIconString(iconString)
+	if type(iconString) == "string" then
+		local splitIndex = iconString:find(":", 1, true)
+		if splitIndex then
+			return iconString:sub(1, splitIndex - 1), iconString:sub(splitIndex + 1)
+		end
+	end
+	return nil, iconString
+end
+
+-- โหลดข้อมูล pack จาก Footagesus/Icons (ครั้งแรกที่ใช้เท่านั้น แล้วเก็บ cache ไว้)
+local function loadPack(packName)
+	local cached = IconModule.Icons[packName]
+	if cached ~= nil then
+		return cached or nil
+	end
+
+	local ok, data = pcall(function()
+		return Loadstring(Get(("%s/%s/dist/Icons.lua"):format(BASE_URL, packName)))()
+	end)
+
+	if ok and type(data) == "table" then
+		IconModule.Icons[packName] = data
+		return data
+	end
+
+	warn("[icons] failed to load pack: " .. tostring(packName))
+	IconModule.Icons[packName] = false
+	return nil
+end
+
+function IconModule.SetIconsType(iconType)
+	IconModule.IconsType = iconType
+end
+
+function IconModule.Init(New, IconThemeTag)
+	IconModule.New = New
+	IconModule.IconThemeTag = IconThemeTag
+
+	return IconModule
+end
+
+function IconModule.Icon(Icon, Type, DefaultFormat)
+	DefaultFormat = DefaultFormat ~= false
+	local iconType, iconName = parseIconString(Icon)
+
+	local targetType = iconType or Type or IconModule.IconsType
+	local targetName = iconName
+
+	local iconSet = IconModule.Icons[targetType]
+	if iconSet == nil then
+		iconSet = loadPack(targetType)
+	end
+	if not iconSet then
+		return nil
+	end
+
+	if iconSet.Icons and iconSet.Icons[targetName] then
+		return {
+			iconSet.Spritesheets[tostring(iconSet.Icons[targetName].Image)],
+			iconSet.Icons[targetName],
+		}
+	elseif type(iconSet[targetName]) == "string" and string.find(iconSet[targetName], "rbxassetid://") then
+		return DefaultFormat
+			and {
+				iconSet[targetName],
+				{ ImageRectSize = Vector2.new(0, 0), ImageRectPosition = Vector2.new(0, 0) },
+			}
+			or iconSet[targetName]
+	end
+
+	return nil
+end
+
+function IconModule.GetIcon(Icon, Type)
+	return IconModule.Icon(Icon, Type, false)
+end
+
+function IconModule.Icon2(Icon, Type)
+	return IconModule.Icon(Icon, Type, true)
+end
+
+function IconModule.AddIcons(packName, iconsData)
+	if type(packName) ~= "string" or type(iconsData) ~= "table" then
+		error("AddIcons: packName must be string, iconsData must be table")
+		return
+	end
+
+	if not IconModule.Icons[packName] or IconModule.Icons[packName] == false then
+		IconModule.Icons[packName] = {
+			Icons = {},
+			Spritesheets = {},
+		}
+	end
+
+	for iconName, iconValue in pairs(iconsData) do
+		if type(iconValue) == "number" or (type(iconValue) == "string" and iconValue:match("^rbxassetid://")) then
+			local imageId = iconValue
+			if type(iconValue) == "number" then
+				imageId = "rbxassetid://" .. tostring(iconValue)
+			end
+
+			IconModule.Icons[packName].Icons[iconName] = {
+				Image = imageId,
+				ImageRectSize = Vector2.new(0, 0),
+				ImageRectPosition = Vector2.new(0, 0),
+				Parts = nil,
+			}
+			IconModule.Icons[packName].Spritesheets[imageId] = imageId
+		elseif type(iconValue) == "table" and iconValue.Image and iconValue.ImageRectSize and iconValue.ImageRectPosition then
+			local imageId = iconValue.Image
+			if type(imageId) == "number" then
+				imageId = "rbxassetid://" .. tostring(imageId)
+			end
+
+			IconModule.Icons[packName].Icons[iconName] = {
+				Image = imageId,
+				ImageRectSize = iconValue.ImageRectSize,
+				ImageRectPosition = iconValue.ImageRectPosition,
+				Parts = iconValue.Parts,
+			}
+
+			if not IconModule.Icons[packName].Spritesheets[imageId] then
+				IconModule.Icons[packName].Spritesheets[imageId] = imageId
+			end
+		else
+			warn("AddIcons: unsupported data type for icon '" .. tostring(iconName) .. "': " .. type(iconValue))
+		end
+	end
+end
+
+function IconModule.Image(IconConfig)
+	local Icon = {
+		Icon = IconConfig.Icon or nil,
+		Type = IconConfig.Type,
+		Colors = IconConfig.Colors or { (IconModule.IconThemeTag or Color3.new(1, 1, 1)), Color3.new(1, 1, 1) },
+		Size = IconConfig.Size or UDim2.new(0, 24, 0, 24),
+
+		IconFrame = nil,
+	}
+
+	local Colors = {}
+
+	for i, color in next, Icon.Colors do
+		Colors[i] = {
+			ThemeTag = typeof(color) == "string" and color,
+			Color = typeof(color) == "Color3" and color,
+		}
+	end
+
+	local IconLabel = IconModule.Icon2(Icon.Icon, Icon.Type)
+
+	local IconFrame = Instance.new("ImageLabel")
+	IconFrame.Size = Icon.Size
+	IconFrame.BackgroundTransparency = 1
+
+	Icon.IconFrame = IconFrame
+
+	if not IconLabel then
+		warn("[icons] icon not found: " .. tostring(Icon.Icon))
+		return Icon
+	end
+
+	IconFrame.ImageColor3 = Colors[1] and Colors[1].Color or Color3.new(1, 1, 1)
+	IconFrame.Image = IconLabel[1]
+	IconFrame.ImageRectSize = IconLabel[2].ImageRectSize
+	IconFrame.ImageRectOffset = IconLabel[2].ImageRectPosition
+
+	if IconLabel[2].Parts then
+		for i, part in next, IconLabel[2].Parts do
+			local IconPartLabel = IconModule.Icon2(part, Icon.Type)
+			if IconPartLabel then
+				local IconPart = Instance.new("ImageLabel")
+				IconPart.Size = UDim2.new(1, 0, 1, 0)
+				IconPart.BackgroundTransparency = 1
+				IconPart.ImageColor3 = Colors[1 + i] and Colors[1 + i].Color or Color3.new(1, 1, 1)
+				IconPart.Image = IconPartLabel[1]
+				IconPart.ImageRectSize = IconPartLabel[2].ImageRectSize
+				IconPart.ImageRectOffset = IconPartLabel[2].ImageRectPosition
+				IconPart.Parent = IconFrame
+			end
+		end
+	end
+
+	return Icon
+end
+
+return IconModule
+
+end)()
+
+library.icons = icons
+
+local function applyIcon(imageLabel, icon, iconType)
+    if not icon or not imageLabel then return end
+
+    local ok, data = pcall(function()
+        return icons.Icon2(icon, iconType)
+    end)
+
+    if ok and data then
+        imageLabel.Image = data[1]
+
+        local info = data[2]
+        if info and info.ImageRectSize and info.ImageRectSize.X > 0 then
+            imageLabel.ImageRectSize = info.ImageRectSize
+            imageLabel.ImageRectOffset = info.ImageRectPosition or Vector2.new(0, 0)
+        end
+    else
+        warn("[ui] icon not found: " .. tostring(icon))
+    end
+end
+
 if getgenv and getgenv().ui then
     getgenv().ui:Destroy()
 end
@@ -169,7 +450,7 @@ do
         end)
     end
 
-    function main:window(name)
+    function main:window(name, icon)
         local newWindow = library:createElement("ImageLabel", {
             Name = name;
             Size = UDim2.new(0, 180, 0, 50);
@@ -250,6 +531,21 @@ do
             });
             Parent = library.container;
         })
+        if icon then
+            local iconLabel = library:createElement("ImageLabel", {
+                Name = "icon";
+                Size = UDim2.new(0, 18, 0, 18);
+                Position = UDim2.new(0, 14, 0, 8);
+                BackgroundTransparency = 1;
+                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ZIndex = 3;
+                Parent = newWindow.frame.topBorder;
+            })
+            applyIcon(iconLabel, icon)
+            newWindow.frame.topBorder.title.Position = UDim2.new(0, 38, 0, 0)
+            newWindow.frame.topBorder.title.Size = UDim2.new(0, 142, 0, 35)
+        end
+
         CreateDrag(newWindow)
 
         local window = setmetatable({
@@ -261,7 +557,7 @@ do
         return window
     end
 
-    function main:newTab(name)
+    function main:newTab(name, icon)
         local newTab = library:createElement("Frame", {
             Name = name;
             Size = UDim2.new(1, 0, 0, 35);
@@ -306,6 +602,21 @@ do
             });
             Parent = self.container;
         })
+
+        if icon then
+            local iconLabel = library:createElement("ImageLabel", {
+                Name = "icon";
+                Size = UDim2.new(0, 16, 0, 16);
+                Position = UDim2.new(0, 32, 0, 4);
+                BackgroundTransparency = 1;
+                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ZIndex = 3;
+                Parent = newTab.button;
+            })
+            applyIcon(iconLabel, icon)
+            newTab.button.title.Position = UDim2.new(0, 54, 0, 0)
+            newTab.button.title.Size = UDim2.new(1, -64, 1, 0)
+        end
 
         local container = library:createElement("Frame", {
             Name = "container";
@@ -1272,7 +1583,7 @@ do
         end
     end
 
-    function tabs:button(name, callback)
+    function tabs:button(name, callback, icon)
         local callback = callback or function() end
 
         local newButton = library:createElement("Frame", {
@@ -1315,6 +1626,22 @@ do
             });
             Parent = self.container;
         })
+
+        if icon then
+            local iconLabel = library:createElement("ImageLabel", {
+                Name = "icon";
+                Size = UDim2.new(0, 16, 0, 16);
+                Position = UDim2.new(0, 8, 0, 4);
+                BackgroundTransparency = 1;
+                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ZIndex = 3;
+                Parent = newButton.border.frame;
+            })
+            applyIcon(iconLabel, icon)
+            newButton.border.frame.title.Position = UDim2.new(0, 30, 0, 0)
+            newButton.border.frame.title.Size = UDim2.new(1, -38, 1, 0)
+            newButton.border.frame.title.TextXAlignment = Enum.TextXAlignment.Left
+        end
 
         newButton.border.frame.InputBegan:Connect(function(input)
             if not isPrimaryInput(input) then return end
@@ -1387,6 +1714,21 @@ do
             });
             Parent = self.container;
         })
+
+        if options.icon then
+            local iconLabel = library:createElement("ImageLabel", {
+                Name = "icon";
+                Size = UDim2.new(0, 16, 0, 16);
+                Position = UDim2.new(0, 10, 0, 4);
+                BackgroundTransparency = 1;
+                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ZIndex = 3;
+                Parent = newToggle.border.frame;
+            })
+            applyIcon(iconLabel, options.icon)
+            newToggle.border.frame.title.Position = UDim2.new(0, 32, 0, 0)
+            newToggle.border.frame.title.Size = UDim2.new(1, -42, 1, 0)
+        end
 
         local button = newToggle.border.frame.button
 
@@ -1934,6 +2276,21 @@ do
             Parent = self.container;
         })
 
+        if options.icon then
+            local iconLabel = library:createElement("ImageLabel", {
+                Name = "icon";
+                Size = UDim2.new(0, 16, 0, 16);
+                Position = UDim2.new(0, 10, 0, 4);
+                BackgroundTransparency = 1;
+                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ZIndex = 2;
+                Parent = newDropdown.border.frame;
+            })
+            applyIcon(iconLabel, options.icon)
+            newDropdown.border.frame.label.Position = UDim2.new(0, 32, 0, 0)
+            newDropdown.border.frame.label.Size = UDim2.new(1, -42, 0, 25)
+        end
+
         local border = newDropdown:WaitForChild("border")
         local button = border:WaitForChild("frame")
         local label = button:WaitForChild("label")
@@ -2115,7 +2472,7 @@ do
         return obj
     end
     
-    function library:createWindow(name)
+    function library:createWindow(name, icon)
         if not library.container then
             library.container = self:createElement("ScreenGui", {
                 self:createElement("Frame", {
@@ -2142,7 +2499,7 @@ do
             getgenv().ui = library.container
         end
 
-        local window = main:window(name)
+        local window = main:window(name, icon)
         return window
     end
 
