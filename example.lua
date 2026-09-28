@@ -10,6 +10,7 @@ local library = loadstring(game:HttpGet(
 
 -- สร้างหน้าต่าง UI (พารามิเตอร์ที่ 2 = ไอค่อน ไม่ใส่ก็ได้)
 -- ชื่อไอค่อนดูได้ที่ https://github.com/Footagesus/Icons (lucide เป็นค่าเริ่มต้น)
+-- หน้าต่างขนาดคงที่ 392x380 — ลาก "มุมล่างขวา" เพื่อปรับขนาด (เนื้อหาในแท็บเลื่อนได้)
 local window = library:createWindow("My Script", "gamepad-2")
 
 -- สร้างแท็บ (sections) -- แต่ละแท็บพับ/กางได้
@@ -199,6 +200,9 @@ print("weapon =", flags.weapon)
     ชื่อไอค่อน: https://github.com/Footagesus/Icons
     pack ที่มี: lucide (ค่าเริ่มต้น), solar, craft, geist, sfsymbols, gravity
 
-    ปุ่มลัดของ UI:
+    การใช้งาน UI:
+      หน้าต่างขนาดคงที่ (392x380) ไม่ขยายตามแท็บ
+      ลากมุมล่างขวา = ปรับขนาดหน้าต่าง (ขั้นต่ำ 390x220)
+      เนื้อหาในแท็บ/รายชื่อด้านซ้าย = เลื่อนดูได้เมื่อยาวเกิน
       RightControl = ซ่อน/แสดง UI
 ]]
