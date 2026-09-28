@@ -402,82 +402,7 @@ do
         return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
     end
 
-    -- แยก "การแตะ/คลิกสั้น" ออกจากการลาก/เลื่อน
-    -- (ScrollingFrame บนมือถือกลืน event คลิกอย่าง MouseButton1Click ทำให้ปุ่มกดไม่ติด)
-    local function tapGuard(input, callback, moveThreshold)
-        moveThreshold = moveThreshold or 10
-
-        local startPos = input.Position
-        local moved = false
-
-        local moveConn = userInputService.InputChanged:Connect(function(mInput)
-            if moved then return end
-
-            if mInput == input or mInput.UserInputType == Enum.UserInputType.MouseMovement then
-                local delta = mInput.Position - startPos
-                if math.abs(delta.X) > moveThreshold or math.abs(delta.Y) > moveThreshold then
-                    moved = true
-                end
-            end
-        end)
-
-        local finished = false
-        local endConn
-        local endedConn
-
-        local function finish()
-            if finished then return end
-            finished = true
-
-            moveConn:Disconnect()
-            if endConn then endConn:Disconnect() end
-            if endedConn then endedConn:Disconnect() end
-
-            callback(not moved)
-        end
-
-        endConn = input.Changed:Connect(function()
-            local state = input.UserInputState
-            if state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
-                finish()
-            end
-        end)
-
-        -- สำรอง: ถ้า input.Changed ไม่ยิงตอนนิ้วยก (มือถือบางเครื่อง) ให้จับจาก event กลางแทน
-        endedConn = userInputService.InputEnded:Connect(function(ended)
-            if ended == input then
-                finish()
-            end
-        end)
-    end
-
-    local function onQuickTap(object, callback, moveThreshold)
-        local consumed = {}
-
-        local function hook(target)
-            if not target:IsA("GuiObject") then return end
-
-            target.InputBegan:Connect(function(input)
-                if not isPrimaryInput(input) then return end
-                if consumed[input] then return end
-
-                consumed[input] = true
-
-                tapGuard(input, function(wasTap)
-                    consumed[input] = nil
-                    if wasTap then
-                        callback()
-                    end
-                end, moveThreshold)
-            end)
-        end
-
-        hook(object)
-
-        for _, desc in ipairs(object:GetDescendants()) do
-            hook(desc)
-        end
-    end
+    -- แตะ/คลิก: ใช้ InputBegan + isPrimaryInput ทันที (รองรับทั้งเมาส์และนิ้ว)
 
     local function setScrollingEnabled(frame, enabled)
         local p = frame.Parent
@@ -1797,7 +1722,10 @@ do
             newButton.border.frame.title.TextXAlignment = Enum.TextXAlignment.Left
         end
 
-        onQuickTap(newButton.border.frame, callback)
+        newButton.border.frame.InputBegan:Connect(function(input)
+            if not isPrimaryInput(input) then return end
+            callback()
+        end)
     end
 
     function tabs:toggle(name, options, useBind, bindOptions, callback)
@@ -1962,7 +1890,8 @@ do
                 Parent = newToggle.border.frame;
             })
 
-            onQuickTap(bind.bindFrame.bindLabel, function()
+            bind.bindFrame.bindLabel.InputBegan:Connect(function(input)
+                if not isPrimaryInput(input) then return end
                 library.binding = true
 
                 bind.bindFrame.bindLabel.Text = "..."
@@ -2017,7 +1946,10 @@ do
             }
         end
 
-        onQuickTap(newToggle.border.frame, click)
+        newToggle.border.frame.InputBegan:Connect(function(input)
+            if not isPrimaryInput(input) then return end
+            click()
+        end)
     end
 
     function tabs:slider(name, options, sliderCallback, useToggle, toggleOptions)
@@ -2169,7 +2101,8 @@ do
                 Parent = newSlider.border.frame;
             })
 
-            onQuickTap(sliderToggle, function()
+            sliderToggle.InputBegan:Connect(function(input)
+                if not isPrimaryInput(input) then return end
                 tLocation[tFlag] = not tLocation[tFlag]
                 tCallback(tLocation[tFlag])
                 sliderToggle.toggle:TweenSizeAndPosition((tLocation[tFlag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0), (tLocation[tFlag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0), (tLocation[tFlag] and 'Out') or 'In', (tLocation[tFlag] and 'Elastic') or 'Quad', (tLocation[tFlag] and 0.75) or 0.15, true)
@@ -2537,16 +2470,23 @@ do
                 end
             end
 
-            onQuickTap(listItem, switch)
+            listItem.InputBegan:Connect(function(input)
+                if not isPrimaryInput(input) then return end
+                switch()
+            end)
 
             if useToggles then
             
-                onQuickTap(toggle, switch)
+                toggle.InputBegan:Connect(function(input)
+                    if not isPrimaryInput(input) then return end
+                    switch()
+                end)
 
             end
         end
 
-        onQuickTap(newDropdown.border, function()
+        newDropdown.border.InputBegan:Connect(function(input)
+            if not isPrimaryInput(input) then return end
             dropDown.toggled = not dropDown.toggled
 
             if not useToggles then
@@ -2588,20 +2528,16 @@ do
             if not isPrimaryInput(input) then return end
             if not dropDown.toggled or (isInGui(dropDown.border, input.Position) or isInGui(container.containerBorder, input.Position)) then return end
 
-            tapGuard(input, function(wasTap)
-                if not wasTap or not dropDown.toggled then return end
+            dropDown.toggled = false
 
-                dropDown.toggled = false
+            if not useToggles then
+                dropDown.label.TextTransparency = 0
+                dropDown.label.Text = location[flag]
+            end
 
-                if not useToggles then
-                    dropDown.label.TextTransparency = 0
-                    dropDown.label.Text = location[flag]
-                end
+            container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
 
-                container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
-
-                dropDown.arrow.Rotation = 0
-            end)
+            dropDown.arrow.Rotation = 0
         end)
     end
 
