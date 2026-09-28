@@ -1,0 +1,204 @@
+--==================================================
+-- ตัวอย่างการใช้ Sixly UI Library (ฉบับแก้บัคมือถือแล้ว)
+-- วิธีใช้: รันสคริปต์นี้ใน executor ได้เลย
+--==================================================
+
+-- โหลด library (ใช้ URL ของ repo คุณเอง)
+local library = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/x9msms/X9msUilib/refs/heads/main/library/ui.lua"
+))()
+
+-- สร้างหน้าต่าง UI (พารามิเตอร์ที่ 2 = ไอค่อน ไม่ใส่ก็ได้)
+-- ชื่อไอค่อนดูได้ที่ https://github.com/Footagesus/Icons (lucide เป็นค่าเริ่มต้น)
+local window = library:createWindow("My Script", "gamepad-2")
+
+-- สร้างแท็บ (sections) -- แต่ละแท็บพับ/กางได้
+local main = window:newTab("Main", "house")
+local farming = window:newTab("Farming", "wheat")
+local settings = window:newTab("Settings", "settings")
+
+-- ตารางเก็บค่า (ใช้ location + flag เพื่อเข้าถึงค่าภายหลัง)
+local flags = {}
+
+--=========================
+-- 1) Label (ข้อความ)
+--=========================
+local info = main:label("info", "ยินดีต้อนรับ! ใช้ได้ทั้ง PC และมือถือ")
+
+-- เปลี่ยนข้อความภายหลังได้:
+-- info:changeText("ข้อความใหม่")
+
+--=========================
+-- 2) Button (ปุ่มกด)
+--=========================
+main:button("กดฉัน", function()
+    library:notify("Button", "คุณกดปุ่มแล้ว!", 2)
+end, "mouse-pointer-click")  -- พารามิเตอร์สุดท้าย = ไอค่อน (ไม่ใส่ก็ได้)
+
+--=========================
+-- 3) Toggle (สวิตช์ เปิด/ปิด)
+--=========================
+farming:toggle("Auto Farm", {
+    default = false;      -- ค่าเริ่มต้น
+    location = flags;     -- เก็บค่าไว้ใน flags
+    flag = "auto_farm";   -- เรียกใช้ flags.auto_farm
+    icon = "tractor";     -- ไอค่อน (ไม่ใส่ก็ได้)
+}, false, nil, function(value)
+    print("Auto Farm =", value)
+end)
+
+-- Toggle ผูกคีย์ลัด (กดปุ่มเพื่อสลับสถานะ) -- PC ใช้คีย์บอร์ด/เมาส์
+farming:toggle("Speed Boost", {
+    default = false;
+    location = flags;
+    flag = "speed";
+}, true, {
+    flag = "speed_bind";
+    default = Enum.KeyCode.LeftControl;  -- กด LeftCtrl เพื่อสลับ
+    -- kbonly = true;                    -- เปิดถ้าอยากให้ผูกได้เฉพาะคีย์บอร์ด
+}, function(value)
+    print("Speed =", value)
+end)
+
+--=========================
+-- 4) Slider (เลื่อนค่า)
+--=========================
+farming:slider("WalkSpeed", {
+    min = 16;
+    max = 200;
+    default = 16;
+    location = flags;
+    flag = "walkspeed";
+}, function(value)
+    print("WalkSpeed =", value)
+    -- LocalPlayer.Character.Humanoid.WalkSpeed = value
+end)
+
+-- Slider พร้อม toggle ในตัว
+farming:slider("Jump Power", {
+    min = 50;
+    max = 300;
+    default = 50;
+    location = flags;
+    flag = "jumppower";
+}, function(value)
+    print("JumpPower =", value)
+end, true, {
+    flag = "jump_enabled";
+    default = false;
+    callback = function(on)
+        print("เปิดใช้งาน Jump =", on)
+    end;
+})
+
+--=========================
+-- 5) TextBox (ช่องพิมพ์)
+--=========================
+settings:textbox("ชื่อผู้เล่น", {
+    default = "พิมพ์ที่นี่";
+    location = flags;
+    flag = "player_name";
+}, function(text)
+    print("ข้อความที่พิมพ์ =", text)
+end)
+-- * หมายเหตุ: ต้องกด Enter เพื่อยืนยันข้อความ (callback ถึงจะทำงาน)
+
+--=========================
+-- 6) Dropdown (เมนูเลือก)
+--=========================
+
+-- 6.1 เลือกได้ทีละอัน (useToggles = false)
+settings:dropdown("เลือกอาวุธ", false, {
+    list = {"ดาบ", "ปืน", "ระเบิด", "ธนู"};
+    default = "ดาบ";
+    location = flags;
+    flag = "weapon";
+    icon = "swords";      -- ไอค่อน (ไม่ใส่ก็ได้)
+}, function(value)
+    print("อาวุธ =", value)
+end)
+
+-- 6.2 เลือกได้หลายอัน (useToggles = true)
+settings:dropdown("เลือกหลายอย่าง", true, {
+    list = {"Common", "Rare", "Epic", "Legendary", "Mythic"};
+    default = {"Rare", "Epic"};     -- ติ๊กถูกเริ่มต้น
+    location = flags;               -- flags["Rare"] = true/false
+}, function(enabled, name, flag)
+    print(name, "=", enabled)
+end)
+
+--=========================
+-- 7) ColorSelector (เลือกสี)
+--=========================
+settings:colorSelector("สีธีม", {
+    default = Color3.fromRGB(0, 170, 255);
+    location = flags;
+    flag = "theme_color";
+}, function(color)
+    print("สี =", color)
+end)
+
+--=========================
+-- 9) ระบบไอค่อน (Footagesus/Icons)
+--    ชื่อไอค่อน: https://github.com/Footagesus/Icons
+--=========================
+
+-- ดึง "rbxassetid://..." ไปใช้เอง
+local iconId = library.icons.GetIcon("rocket")
+print("icon:", iconId)
+
+-- ระบุ pack:name (lucide, solar, craft, geist, sfsymbols, gravity)
+local sfIcon = library.icons.GetIcon("sfsymbols:HouseFill")
+local geistIcon = library.icons.GetIcon("geist:accessibility-unread")
+
+-- เปลี่ยน pack เริ่มต้น (ค่าเริ่มต้นคือ lucide)
+-- library.icons.SetIconsType("solar")
+
+-- สร้าง ImageLabel ไอค่อนพร้อมสี (รองรับไอค่อนหลายสีอย่าง geist)
+local iconObj = library.icons.Image({
+    Icon = "house";
+    Size = UDim2.fromOffset(24, 24);
+    Colors = { Color3.fromRGB(255, 255, 255) };
+})
+-- iconObj.IconFrame.Parent = <ScreenGui ของคุณ>
+
+--=========================
+-- 10) Notification (แจ้งเตือน)
+--     library:notify(หัวข้อ, ข้อความ, วินาที)
+--=========================
+library:notify("โหลดสำเร็จ!", "UI พร้อมใช้งานแล้ว", 3)
+
+-- กางแท็บแรกออกอัตโนมัติ (ไม่ต้องกดเอง)
+main.spFuncs:SimClck()
+
+--=========================
+-- เข้าถึงค่าภายหลัง
+--=========================
+print("auto_farm =", flags.auto_farm)
+print("walkspeed =", flags.walkspeed)
+print("weapon =", flags.weapon)
+
+--[[
+    สรุป API ทั้งหมด:
+      library:createWindow(name, icon?)            -> window
+      window:newTab(name, icon?)                   -> tab
+      tab:label(name, text)                        -> label (:changeText(text))
+      tab:button(name, callback, icon?)
+      tab:toggle(name, options, useBind, bindOptions, callback)   -- options.icon = "..."
+      tab:slider(name, options, callback, useToggle, toggleOptions)
+      tab:textbox(name, options, callback)
+      tab:dropdown(name, useToggles, options, callback)           -- options.icon = "..."
+      tab:colorSelector(name, options, callback)
+      library:notify(title, text, timeout)
+      library.icons.GetIcon("house")               -> "rbxassetid://..."
+      library.icons.GetIcon("geist:house")         -> ระบุ pack:name
+      library.icons.SetIconsType("solar")          -> เปลี่ยน pack เริ่มต้น
+      library.icons.Image({...})                   -> { IconFrame } (ไอค่อนหลายสี)
+      tab.spFuncs:SimClck()                        -> พับ/กางแท็บ
+
+    ชื่อไอค่อน: https://github.com/Footagesus/Icons
+    pack ที่มี: lucide (ค่าเริ่มต้น), solar, craft, geist, sfsymbols, gravity
+
+    ปุ่มลัดของ UI:
+      RightControl = ซ่อน/แสดง UI
+]]
