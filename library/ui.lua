@@ -130,64 +130,42 @@ do
         return count
     end
 
-    local m = game.Players.LocalPlayer:GetMouse()
-
-    local function isHoveringOverObj(obj, screenPos)
-        if not obj then return end
-
-        local pos = screenPos and toGuiPosition(screenPos) or Vector2.new(m.X, m.Y)
-
-        local tx = obj.AbsolutePosition.X
-        local ty = obj.AbsolutePosition.Y
-        local bx = tx + obj.AbsoluteSize.X
-        local by = ty + obj.AbsoluteSize.Y
-        return (pos.X >= tx and pos.X <= bx) and (pos.Y >= ty and pos.Y <= by)
-    end
-
-    local function Resize(part,new,_delay)
-        local TweenService = game:GetService("TweenService")
-        _delay = _delay or 0.5
-        local tweenInfo = TweenInfo.new(_delay, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local tween = TweenService:Create(part, tweenInfo, new)
-        tween:Play()
-    end
-
     local function CreateDrag(gui)
-        local UserInputService = game:GetService("UserInputService")
-        local dragging
+        local dragging = false
         local dragInput
         local dragStart
         local startPos
-        
-        local function update(input)
+
+        -- drag starts only from the title bar; input on it propagates up from its children,
+        -- and no coordinate math is needed (works for mouse, touch and any DPI/inset)
+        gui.frame.topBorder.InputBegan:Connect(function(input)
+            if dragging then return end
+            if not isPrimaryInput(input) then return end
+
+            dragging = true
+            dragInput = input
+            dragStart = input.Position
+            startPos = gui.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    dragInput = nil
+                end
+            end)
+        end)
+
+        userInputService.InputChanged:Connect(function(input)
+            if not dragging then return end
+
+            local isDragMove = (input == dragInput)
+                or (input.UserInputType == Enum.UserInputType.MouseMovement)
+                or (dragInput and dragInput.UserInputType == Enum.UserInputType.Touch and input.UserInputType == Enum.UserInputType.Touch)
+
+            if not isDragMove then return end
+
             local delta = input.Position - dragStart
-            Resize(gui, {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}, 0.16)
-        end
-        
-        gui.InputBegan:Connect(function(input)
-            if isPrimaryInput(input) and isHoveringOverObj(gui.frame.topBorder, input.Position) then
-                dragging = true
-                dragStart = input.Position
-                startPos = gui.Position
-                
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
-            end
-        end)
-        
-        gui.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                dragInput = input
-            end
-        end)
-        
-        UserInputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                update(input)
-            end
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end)
     end
 
