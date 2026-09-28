@@ -67,6 +67,61 @@ local function createPrimaryCheck(size, position, zIndex)
     return check
 end
 
+-- สวิตช์แบบ pill: แถบพื้นเข้ม + แถบแดงไล่สีเลื่อน + ปุ่มกลมขาว (แบบ UI ทั่วไป)
+local function createSwitch(initialOn, zIndex)
+    local z = zIndex or 1
+
+    local track = Instance.new("Frame")
+    track.Name = "toggle"
+    track.Size = UDim2.new(1, 0, 1, 0)
+    track.Position = UDim2.new(0, 0, 0, 0)
+    track.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
+    track.BorderSizePixel = 0
+    track.ClipsDescendants = true
+    track.ZIndex = z
+
+    local trackCorner = Instance.new("UICorner", track)
+    trackCorner.CornerRadius = UDim.new(1, 0)
+
+    local fill = Instance.new("Frame", track)
+    fill.Name = "fill"
+    fill.Size = (initialOn and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0)
+    fill.Position = UDim2.new(0, 0, 0, 0)
+    fill.BorderSizePixel = 0
+    fill.ZIndex = z + 1
+    registerTheme(fill, "BackgroundColor3")
+
+    local fillCorner = Instance.new("UICorner", fill)
+    fillCorner.CornerRadius = UDim.new(1, 0)
+
+    local knob = Instance.new("Frame", track)
+    knob.Name = "knob"
+    knob.AnchorPoint = Vector2.new(0.5, 0.5)
+    knob.Size = UDim2.new(0.42, 0, 0.72, 0)
+    knob.Position = (initialOn and UDim2.new(0.72, 0, 0.5, 0)) or UDim2.new(0.28, 0, 0.5, 0)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.BorderSizePixel = 0
+    knob.ZIndex = z + 2
+
+    local knobCorner = Instance.new("UICorner", knob)
+    knobCorner.CornerRadius = UDim.new(1, 0)
+
+    return track
+end
+
+-- อัปเดตภาพสวิตช์/เช็คบ็อกซ์ตามสถานะ (รองรับทั้ง 2 สไตล์)
+local function setToggleVisual(toggleObj, on)
+    local fill = toggleObj:FindFirstChild("fill")
+    local knob = toggleObj:FindFirstChild("knob")
+
+    if fill and knob then
+        fill:TweenSize((on and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0), "Out", "Quad", 0.18, true)
+        knob:TweenPosition((on and UDim2.new(0.72, 0, 0.5, 0)) or UDim2.new(0.28, 0, 0.5, 0), "Out", "Quad", 0.18, true)
+    else
+        toggleObj:TweenSizeAndPosition((on and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0), (on and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0), (on and 'Out') or 'In', (on and 'Elastic') or 'Quad', (on and 0.75) or 0.15, true)
+    end
+end
+
 --==================== ระบบไอค่อน (based on Footagesus/Icons — MIT License) ====================
 -- https://github.com/Footagesus/Icons
 local icons = (function()
@@ -448,6 +503,22 @@ do
         end
     end
 
+    function main:section(name)
+        return library:createElement("TextLabel", {
+            Name = "section";
+            Size = UDim2.new(1, 0, 0, 24);
+            LayoutOrder = self:getOrder();
+            BackgroundTransparency = 1;
+            Text = name;
+            TextColor3 = Color3.fromRGB(150, 150, 150);
+            TextXAlignment = Enum.TextXAlignment.Left;
+            Font = Enum.Font.GothamSemibold;
+            TextSize = 11;
+            ZIndex = 3;
+            Parent = self.container;
+        })
+    end
+
     function main:resize()
         -- หน้าต่างขนาดคงที่แล้ว (ปรับขนาดได้จากมุมล่างขวา) ไม่ย่อ/ขยายตามเนื้อหา
     end
@@ -587,7 +658,7 @@ do
     end
 
 
-    function main:window(name, icon)
+    function main:window(name, icon, subtitle)
         local newWindow = library:createElement("ImageLabel", {
             Name = name;
             Size = UDim2.new(0, 392, 0, 380);
@@ -674,7 +745,7 @@ do
                 Size = UDim2.new(0, 18, 0, 18);
                 Position = UDim2.new(0, 14, 0, 8);
                 BackgroundTransparency = 1;
-                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ImageColor3 = "@theme";
                 ZIndex = 3;
                 Parent = newWindow.frame.topBorder;
             })
@@ -685,6 +756,26 @@ do
 
         CreateDrag(newWindow)
         CreateResize(newWindow)
+
+        if subtitle then
+            local topTitle = newWindow.frame.topBorder.title
+            topTitle.Size = UDim2.new(0, 180, 0, 18)
+            topTitle.Position = UDim2.new(0, 15, 0, 1)
+
+            library:createElement("TextLabel", {
+                Name = "subtitle";
+                Size = UDim2.new(0, 180, 0, 14);
+                Position = UDim2.new(0, 15, 0, 19);
+                Text = subtitle;
+                TextColor3 = Color3.fromRGB(150, 150, 150);
+                TextWrapped = true;
+                TextXAlignment = Enum.TextXAlignment.Left;
+                Font = Enum.Font.GothamSemibold;
+                TextSize = 10;
+                BackgroundTransparency = 1;
+                Parent = newWindow.frame.topBorder;
+            })
+        end
 
         local window = setmetatable({
             toggled = true;
@@ -747,7 +838,7 @@ do
                 Size = UDim2.new(0, 16, 0, 16);
                 Position = UDim2.new(0, 32, 0, 4);
                 BackgroundTransparency = 1;
-                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ImageColor3 = "@theme";
                 ZIndex = 3;
                 Parent = newTab.button;
             })
@@ -1745,7 +1836,7 @@ do
                 Size = UDim2.new(0, 16, 0, 16);
                 Position = UDim2.new(0, 8, 0, 4);
                 BackgroundTransparency = 1;
-                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ImageColor3 = "@theme";
                 ZIndex = 3;
                 Parent = newButton.border.frame;
             })
@@ -1768,13 +1859,13 @@ do
 
         local newToggle = library:createElement("Frame", {
             Name = name;
-            Size = UDim2.new(0, 200, 0, 35);
+            Size = UDim2.new(0, 200, 0, (options.card and 46) or 35);
             BackgroundTransparency = 1;
             LayoutOrder = self:getOrder();
             library:createElement("ImageLabel", {
                 Name = "border";
-                Size = UDim2.new(1, 0, 0, 26);
-                Position = UDim2.new(0, 0, 0, 5);
+                Size = UDim2.new(1, 0, 0, (options.card and 38) or 26);
+                Position = UDim2.new(0, 0, 0, (options.card and 4) or 5);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
                 ImageColor3 = Color3.fromRGB(28, 28, 28);
@@ -1806,18 +1897,18 @@ do
                     });
                     library:createElement("ImageLabel", {
                         Name = "button";
-                        Size = UDim2.new(0, 18, 0, 18);
-                        Position = UDim2.new(1, -26, 0, 3);
+                        Size = UDim2.new(0, (options.card and 36) or 18, 0, (options.card and 20) or 18);
+                        Position = UDim2.new(1, (options.card and -44) or -26, 0, (options.card and 2) or 3);
                         BackgroundTransparency = 1;
-                        Image = "rbxassetid://4892761119";
+                        Image = (options.card and "") or "rbxassetid://4892761119";
                         ScaleType = Enum.ScaleType.Slice;
                         SliceCenter = Rect.new(6, 6, 14, 14);
                         BackgroundTransparency = 1;
-                        createPrimaryCheck(
+                        ((options.card and createSwitch(location[flag], 2)) or createPrimaryCheck(
                             (location[flag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0),
                             (location[flag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0),
                             2
-                        )
+                        ))
                     })
                 })
             });
@@ -1830,7 +1921,7 @@ do
                 Size = UDim2.new(0, 16, 0, 16);
                 Position = UDim2.new(0, 10, 0, 4);
                 BackgroundTransparency = 1;
-                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ImageColor3 = "@theme";
                 ZIndex = 3;
                 Parent = newToggle.border.frame;
             })
@@ -1839,12 +1930,34 @@ do
             newToggle.border.frame.title.Size = UDim2.new(1, -42, 1, 0)
         end
 
+        if options.card then
+            local title = newToggle.border.frame.title
+            title.Size = UDim2.new(1, -56, 0, 16)
+            title.Position = UDim2.new(0, (options.icon and 32) or 10, 0, 1)
+            title.TextSize = 13
+
+            library:createElement("TextLabel", {
+                Name = "subtitle";
+                Size = UDim2.new(1, -56, 0, 13);
+                Position = UDim2.new(0, (options.icon and 32) or 10, 0, 18);
+                Text = options.subtitle or "";
+                TextColor3 = Color3.fromRGB(160, 160, 160);
+                TextSize = 11;
+                TextWrapped = true;
+                Font = Enum.Font.GothamSemibold;
+                TextXAlignment = Enum.TextXAlignment.Left;
+                BackgroundTransparency = 1;
+                ZIndex = 3;
+                Parent = newToggle.border.frame;
+            })
+        end
+
         local button = newToggle.border.frame.button
 
         local click = function()
             location[flag] = not location[flag]
             callback(location[flag])
-            button.toggle:TweenSizeAndPosition((location[flag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0), (location[flag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0), (location[flag] and 'Out') or 'In', (location[flag] and 'Elastic') or 'Quad', (location[flag] and 0.75) or 0.15, true)
+            setToggleVisual(button.toggle, location[flag])
         end
 
         if useBind then
@@ -2058,11 +2171,37 @@ do
                             })
                         })
                     });
+                    library:createElement("TextLabel", {
+                        Name = "minus";
+                        Size = UDim2.new(0, 13, 0, 13);
+                        Position = UDim2.new(0, (useToggle and 36) or 8, 0, 24);
+                        Text = "-";
+                        TextColor3 = Color3.fromRGB(250, 250, 250);
+                        TextSize = 13;
+                        Font = Enum.Font.GothamSemibold;
+                        BackgroundColor3 = Color3.fromRGB(32, 32, 32);
+                        BorderSizePixel = 0;
+                        ZIndex = 2;
+                        (function() local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) return c end)();
+                    });
+                    library:createElement("TextLabel", {
+                        Name = "plus";
+                        Size = UDim2.new(0, 13, 0, 13);
+                        Position = UDim2.new(0, (useToggle and 161) or 173, 0, 24);
+                        Text = "+";
+                        TextColor3 = Color3.fromRGB(250, 250, 250);
+                        TextSize = 13;
+                        Font = Enum.Font.GothamSemibold;
+                        BackgroundColor3 = Color3.fromRGB(32, 32, 32);
+                        BorderSizePixel = 0;
+                        ZIndex = 2;
+                        (function() local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) return c end)();
+                    });
                     library:createElement("Frame", {
                         Name = "container";
                         BorderSizePixel = 0;
-                        Size = UDim2.new(0, (useToggle and 150) or 175, 0, 8);
-                        Position = UDim2.new(0, (useToggle and 35) or 10, 0, 27);
+                        Size = UDim2.new(0, (useToggle and 104) or 144, 0, 8);
+                        Position = UDim2.new(0, (useToggle and 53) or 25, 0, 27);
                         BackgroundTransparency = 1;
                         library:createElement("Frame", {
                             Name = "sliderBar";
@@ -2113,24 +2252,18 @@ do
 
             local sliderToggle = library:createElement("ImageButton", {
                 Name = "button";
-                Size = UDim2.new(0, 18, 0, 18);
-                Position = UDim2.new(0, 8, 0, 21);
-                Image = "rbxassetid://4892761119";
-                ScaleType = Enum.ScaleType.Slice;
-                SliceCenter = Rect.new(6, 6, 14, 14);
+                Size = UDim2.new(0, 30, 0, 17);
+                Position = UDim2.new(0, 4, 0, 21);
+                Image = "";
                 BackgroundTransparency = 1;
-                createPrimaryCheck(
-                    (tLocation[tFlag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0),
-                    (tLocation[tFlag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0),
-                    2
-                );
+                createSwitch(tLocation[tFlag], 2);
                 Parent = newSlider.border.frame;
             })
 
             onPress(sliderToggle, function()
                 tLocation[tFlag] = not tLocation[tFlag]
                 tCallback(tLocation[tFlag])
-                sliderToggle.toggle:TweenSizeAndPosition((tLocation[tFlag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0), (tLocation[tFlag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0), (tLocation[tFlag] and 'Out') or 'In', (tLocation[tFlag] and 'Elastic') or 'Quad', (tLocation[tFlag] and 0.75) or 0.15, true)
+                setToggleVisual(sliderToggle.toggle, tLocation[tFlag])
             end)
         end
 
@@ -2223,6 +2356,27 @@ do
         container.sliderBar.moveBar.InputEnded:Connect(pressEnded)
         container.sliderBar.circleBorder.InputBegan:Connect(pressBegan)
         container.sliderBar.circleBorder.InputEnded:Connect(pressEnded)
+
+        local step = options.step or 1
+
+        local function setValue(v)
+            v = math.floor(math.clamp(tonumber(v) or min, min, max))
+            sLocation[sFlag] = v
+            textBox.Text = tostring(v)
+
+            local p = (max > min) and ((v - min) / (max - min)) or 0
+            container.sliderBar.circleBorder.Position = UDim2.new(math.clamp(p, 0, 1), -4, 0, -4)
+            container.sliderBar.moveBar.Size = UDim2.new(math.clamp(p, 0, 1), -4, 0, 2)
+            sCallback(v)
+        end
+
+        onPress(newSlider.border.frame.minus, function()
+            setValue((sLocation[sFlag] or min) - step)
+        end)
+
+        onPress(newSlider.border.frame.plus, function()
+            setValue((sLocation[sFlag] or min) + step)
+        end)
 
         textBox:GetPropertyChangedSignal("Text"):Connect(function()
             textBox.Text = textBox.Text:gsub("[^%-%d]", "")
@@ -2402,7 +2556,7 @@ do
                 Size = UDim2.new(0, 16, 0, 16);
                 Position = UDim2.new(0, 10, 0, 4);
                 BackgroundTransparency = 1;
-                ImageColor3 = Color3.fromRGB(250, 250, 250);
+                ImageColor3 = "@theme";
                 ZIndex = 2;
                 Parent = newDropdown.border.frame;
             })
@@ -2591,7 +2745,7 @@ do
         return obj
     end
     
-    function library:createWindow(name, icon)
+    function library:createWindow(name, icon, subtitle)
         if not library.container then
             library.container = self:createElement("ScreenGui", {
                 self:createElement("Frame", {
@@ -2618,7 +2772,7 @@ do
             getgenv().ui = library.container
         end
 
-        local window = main:window(name, icon)
+        local window = main:window(name, icon, subtitle)
         return window
     end
 
