@@ -191,7 +191,7 @@ print("weapon =", flags.weapon)
       tab:dropdown(name, useToggles, options, callback)           -- options.icon = "..."
       tab:colorSelector(name, options, callback)
       library:notify(title, text, timeout)
-      library:setTheme(colorOrHex)             -> เปลี่ยนสีธีมทั้ง UI (ค่าเริ่มต้น: แดง)
+      library:setTheme(colorOrHex)             -> เปลี่ยนสีธีม (แบบไล่สี) ทั้ง UI (ค่าเริ่มต้น: แดง)
       library.themeColor                       -> สีธีมปัจจุบัน
       library.icons.GetIcon("house")               -> "rbxassetid://..."
       library.icons.GetIcon("geist:house")         -> ระบุ pack:name
@@ -203,7 +203,7 @@ print("weapon =", flags.weapon)
     pack ที่มี: lucide (ค่าเริ่มต้น), solar, craft, geist, sfsymbols, gravity
 
     การใช้งาน UI:
-      พื้นหลังสีดำ + สีธีมแดงเป็นค่าเริ่มต้น (ปรับได้ด้วย library:setTheme)
+      พื้นหลังดำสนิท + ธีมแดงไล่สี (gradient) เป็นค่าเริ่มต้น (ปรับได้ด้วย library:setTheme)
       หน้าต่างขนาดคงที่ (392x380) ไม่ขยายตามแท็บ
       ลากมุมล่างขวา = ปรับขนาดหน้าต่าง (ขั้นต่ำ 390x220)
       เนื้อหาในแท็บ/รายชื่อด้านซ้าย = เลื่อนดูได้เมื่อยาวเกิน
