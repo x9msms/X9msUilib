@@ -438,10 +438,17 @@ do
             or input.UserInputType == Enum.UserInputType.Touch
     end
 
-    -- กด = ทำงานทันทีตอนแตะลง (ทั้งเมาส์และนิ้ว)
-    -- ทุกปุ่มมี "ตัวรับทัช" (TextButton โปร่งใส) ทับอยู่ชั้นบนสุดเต็มพื้นที่ปุ่มเป๊ะ ๆ
-    -- hitbox จึงตรงกับปุ่มทุกอุปกรณ์ โดยไม่ต้องเทียบพิกัดเอง
-    -- (title/ไอคอน/ช่องติ๊กที่ทับอยู่จะไม่แย่งทัชไปเงียบ ๆ อีก)
+    -- วิธีคลิกแบบ WindUI (ตาม src): MouseButton1Click บนปุ่ม ทับด้วยตัวรับทัชเต็มพื้นที่
+    -- ยิงคู่ (คลิก + แตะลง) และกันยิงซ้ำใน 0.3 วิ → แตะตรง ๆ ติดทุกอุปกรณ์ ไม่ต้องลาก
+    local lastPress = 0
+
+    local function firePress(callback)
+        local now = tick()
+        if now - lastPress < 0.3 then return end
+        lastPress = now
+        callback()
+    end
+
     local function onPress(object, callback)
         local catcher = Instance.new("TextButton")
         catcher.Name = "tapCatcher"
@@ -454,10 +461,20 @@ do
         catcher.ZIndex = 5
         catcher.Parent = object
 
+        catcher.MouseButton1Click:Connect(function()
+            firePress(callback)
+        end)
+
         catcher.InputBegan:Connect(function(input)
             if not isPrimaryInput(input) then return end
-            callback()
+            firePress(callback)
         end)
+
+        if object:IsA("GuiButton") then
+            object.MouseButton1Click:Connect(function()
+                firePress(callback)
+            end)
+        end
     end
 
     local function toGuiPosition(screenPos)
@@ -465,7 +482,8 @@ do
             screenPos = Vector2.new(screenPos.X, screenPos.Y)
         end
 
-        return screenPos - guiService:GetGuiInset()
+        -- IgnoreGuiInset = true (แบบ WindUI): พิกัดจอจริง = พิกัด GUI ตรง ๆ ไม่ต้องหัก inset
+        return screenPos
     end
 
     local function isInGui(frame, screenPos)
@@ -2746,6 +2764,7 @@ do
     function library:createWindow(name, icon, subtitle)
         if not library.container then
             library.container = self:createElement("ScreenGui", {
+                IgnoreGuiInset = true;
                 self:createElement("Frame", {
                     Name = "Container";
                     Size = UDim2.new(1, -30, 1, 0);
