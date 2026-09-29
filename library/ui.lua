@@ -1775,7 +1775,7 @@ do
                 end)
 
                 v.textBox.FocusLost:Connect(function(enterPressed)
-                    if not enterPressed then 
+                    if not tonumber(v.textBox.Text) then 
                         if i == "red" then
                             v.textBox.Text = R
                         elseif i == "green" then
@@ -2394,10 +2394,15 @@ do
             textBox.Parent.Parent:TweenSizeAndPosition((string.len(textBox.Text) > 3 and UDim2.new(0, 45, 0, 15)) or UDim2.new(0, 30, 0, 15), (string.len(textBox.Text) > 3 and UDim2.new(0, 140, 0, 4)) or UDim2.new(0, 155, 0, 4), 'Out', 'Quad', 0.15, true)
         end)
 
-        textBox.FocusLost:Connect(function(enterPressed)
-            if not enterPressed then return end
+        textBox.FocusLost:Connect(function()
+            local n = tonumber(textBox.Text)
 
-            textBox.Text = math.floor(math.clamp(tonumber(textBox.Text), min, max))
+            if not n then
+                textBox.Text = tostring(sLocation[sFlag] or min)
+                return
+            end
+
+            textBox.Text = math.floor(math.clamp(n, min, max))
             textBox.Parent.Parent:TweenSizeAndPosition((string.len(textBox.Text) > 3 and UDim2.new(0, 45, 0, 15)) or UDim2.new(0, 30, 0, 15), (string.len(textBox.Text) > 3 and UDim2.new(0, 140, 0, 4)) or UDim2.new(0, 155, 0, 4), 'Out', 'Quad', 0.15, true)
             sLocation[sFlag] = tonumber(textBox.Text)
             sCallback(sLocation[sFlag])
