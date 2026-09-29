@@ -4,9 +4,12 @@
 --==================================================
 
 -- โหลด library (ใช้ URL ของ repo คุณเอง)
+-- ⚠️ สำคัญมาก: ใส่ true (nocache) + เลขเวลาท้าย URL = ป้องกัน executor/CDN แคชไฟล์เก่า
 local library = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/x9msms/X9msUilib/refs/heads/main/library/ui.lua"
+    "https://raw.githubusercontent.com/x9msms/X9msUilib/refs/heads/main/library/ui.lua?" .. tostring(os.time()),
+    true
 ))()
+assert(library and library.version == "windui-3", "ได้ไฟล์เก่า! ลองรันใหม่/เปลี่ยนไปใช้ library/v4.lua")
 
 -- สร้างหน้าต่าง UI (พารามิเตอร์ที่ 2 = ไอค่อน ไม่ใส่ก็ได้)
 -- ชื่อไอค่อนดูได้ที่ https://github.com/Footagesus/Icons (lucide เป็นค่าเริ่มต้น)
