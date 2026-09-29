@@ -2519,12 +2519,12 @@ do
             ClipsDescendants = true;
             library:createElement("ImageLabel", {
                 Name = "containerBorder";
-                Size = UDim2.new(0.9, 0, 1, 0);
-                Position = UDim2.new(0.05, 0, 0, 0);
+                Size = UDim2.new(1, 0, 1, 0);
+                Position = UDim2.new(0, 0, 0, 0);
                 BackgroundTransparency = 1;
                 Image = "rbxassetid://4894670678";
-                ImageColor3 = Color3.fromRGB(28, 28, 28);
-                ImageTransparency = 0.3;
+                ImageColor3 = Color3.fromRGB(35, 35, 35);
+                ImageTransparency = 0.15;
                 ScaleType = Enum.ScaleType.Slice;
                 SliceCenter = Rect.new(5, 5, 434, 297);
                 ClipsDescendants = true;
@@ -2535,25 +2535,28 @@ do
                     Position = UDim2.new(0, 1, 0, 1);
                     BackgroundTransparency = 1;
                     Image = "rbxassetid://4894670678";
-                    ImageColor3 = Color3.fromRGB(60, 60, 60);
+                    ImageColor3 = Color3.fromRGB(18, 18, 18);
+                    ImageTransparency = 0.02;
                     ScaleType = Enum.ScaleType.Slice;
                     SliceCenter = Rect.new(5, 5, 434, 297);
                     ClipsDescendants = true;
                     ZIndex = 1;
                     library:createElement("ScrollingFrame", {
                         Name = "scroll";
-                        Size = UDim2.new(1, 0, 1, 0);
-                        Position = UDim2.new(0, 0, 0, 0);
-                        CanvasSize = UDim2.new(0, 0, 0, (useToggles and #list * 27) or #list * 22);
+                        Size = UDim2.new(1, -10, 1, -10);
+                        Position = UDim2.new(0, 5, 0, 5);
+                        CanvasSize = UDim2.new(0, 0, 0, #list * 32 + 2);
                         ScrollingEnabled = #list > 5;
                         ScrollBarThickness = (#list > 5 and 2) or 0;
-                        ScrollBarImageTransparency = (#list > 5 and 0) or 1;
+                        ScrollBarImageTransparency = (#list > 5 and 0.2) or 1;
                         ScrollingDirection = Enum.ScrollingDirection.Y;
                         ElasticBehavior = Enum.ElasticBehavior.Never;
                         BackgroundTransparency = 1;
                         library:createElement("UIListLayout", {
                             Name = "list";
                             SortOrder = 2;
+                            Padding = UDim.new(0, 2);
+                            HorizontalAlignment = Enum.HorizontalAlignment.Center;
                         })
                     })
                 })
@@ -2594,80 +2597,89 @@ do
         table.insert(dropList, dropDown)
 
         for i,v in pairs(list) do
+            -- แถวตัวเลือกแบบ WindUI (TabItem): แถมมน, ตัวหนังสือจางเมื่อยังไม่เลือก, เลือกแล้วสว่าง + ✓ แดง
             local listItem = library:createElement("TextButton", {
                 Name = v.Name;
-                Size = UDim2.new(1, 0, 0, useToggles and 27 or 22);
+                Size = UDim2.new(1, -8, 0, 30);
                 BackgroundTransparency = 1;
-                Text = v.Name;
-                TextColor3 = Color3.fromRGB(250, 250, 250);
-                TextSize = 12;
-                TextWrapped = true;
-                Font = Enum.Font.GothamSemibold;
+                Image = "rbxassetid://4894670678";
+                ImageColor3 = Color3.fromRGB(45, 45, 45);
+                ImageTransparency = 1;
+                ScaleType = Enum.ScaleType.Slice;
+                SliceCenter = Rect.new(5, 5, 434, 297);
+                Text = "";
+                AutoButtonColor = false;
                 LayoutOrder = i;
-                ZIndex = 1;
+                ZIndex = 2;
+                library:createElement("TextLabel", {
+                    Name = "title";
+                    Size = UDim2.new(1, -44, 1, 0);
+                    Position = UDim2.new(0, 12, 0, 0);
+                    BackgroundTransparency = 1;
+                    Text = v.Name;
+                    TextColor3 = Color3.fromRGB(250, 250, 250);
+                    TextSize = 12;
+                    Font = Enum.Font.GothamSemibold;
+                    TextXAlignment = Enum.TextXAlignment.Left;
+                    TextTruncate = Enum.TextTruncate.AtEnd;
+                    TextTransparency = 0.4;
+                    ZIndex = 2;
+                });
+                library:createElement("TextLabel", {
+                    Name = "mark";
+                    Size = UDim2.new(0, 16, 1, 0);
+                    Position = UDim2.new(1, -24, 0, 0);
+                    BackgroundTransparency = 1;
+                    Text = "✓";
+                    TextColor3 = Color3.fromRGB(255, 59, 59);
+                    TextSize = 12;
+                    Font = Enum.Font.GothamBold;
+                    TextTransparency = 1;
+                    ZIndex = 2;
+                });
                 Parent = dropDown.container;
             })
 
-            local toggle
-            if useToggles then
-                toggle = library:createElement("ImageButton", {
-                    Name = "button";
-                    Size = UDim2.new(0, 16, 0, 16);
-                    Position = UDim2.new(0, 150, 0, 4);
-                    Image = "rbxassetid://4892761119";
-                    ScaleType = Enum.ScaleType.Slice;
-                    SliceCenter = Rect.new(6, 6, 14, 14);
-                    BackgroundTransparency = 1;
-                    createPrimaryCheck(
-                        (location[v.flag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0),
-                        (location[v.flag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0),
-                        2
-                    );
-                    Parent = listItem;
-                })
+            local function applyVisual(selected)
+                listItem.ImageTransparency = (selected and 0.7) or 1
+                listItem.title.TextTransparency = (selected and 0) or 0.4
+                listItem.mark.TextTransparency = (selected and 0) or 1
             end
 
-            if i ~= #list then
-                local underline = library:createElement("Frame", {
-                    Name = "underline";
-                    Size = UDim2.new(0.8, 0, 0, 2);
-                    Position = UDim2.new(0.1, 0, 1, -2);
-                    BackgroundColor3 = Color3.fromRGB(40, 40, 40);
-                    BorderSizePixel = 0;
-                    BackgroundTransparency = 0.3;
-                    ZIndex = 1;
-                    Parent = listItem;
-                })
-            end
+            applyVisual((useToggles and location[v.flag]) or ((not useToggles) and v.Name == default))
 
             local function switch()
                 if useToggles then
                     location[v.flag] = not location[v.flag]
-                    callback(location[v.flag],v.Name,v.flag)
-                    toggle.toggle:TweenSizeAndPosition((location[v.flag] and UDim2.new(1, 0, 1, 0)) or UDim2.new(0, 0, 0, 0), (location[v.flag] and UDim2.new(0, 0, 0, 0)) or UDim2.new(0.5, 0, 0.5, 0), (location[v.flag] and 'Out') or 'In', (location[v.flag] and 'Elastic') or 'Quad', (location[v.flag] and 0.75) or 0.15, true)
+                    callback(location[v.flag], v.Name, v.flag)
+                    applyVisual(location[v.flag])
                 else
+                    for _, other in pairs(dropDown.container:GetChildren()) do
+                        if other:IsA("TextButton") and other ~= listItem then
+                            other.ImageTransparency = 1
+                            other.title.TextTransparency = 0.4
+                            other.mark.TextTransparency = 1
+                        end
+                    end
+
+                    applyVisual(true)
+
                     dropDown.toggled = false
 
                     button.label.TextTransparency = 0
-                    button.label.Text = listItem.Text
+                    button.label.Text = v.Name
 
 
                     dropDown.arrow.Rotation = 0
                     newDropdown.ZIndex = 1
                     container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
                     
-                    location[flag] = tostring(listItem.Text)
+                    location[flag] = v.Name
                     callback(location[flag])
                 end
             end
 
             onPress(listItem, switch)
-
-            if useToggles then
-            
-                onPress(toggle, switch)
-
-            end
         end
 
         -- ตัวรับทัชอยู่ในปุ่มโดยตรง (แบบเดียวกับ toggle ที่กดได้แล้ว)
@@ -2679,16 +2691,8 @@ do
                 dropDown.label.Text = (dropDown.toggled and name) or location[flag]
             end
 
-            local y = 0
-            if #list > 5 then
-                if useToggles then y = 5 * 27 else y = 5 * 22 end
-            else
-                for i,v in pairs(dropDown.container:GetChildren()) do
-                    if not v:IsA("UIListLayout") then
-                        y = y + v.AbsoluteSize.Y
-                    end
-                end
-            end
+            -- สูงสุด 5 แถวแบบ WindUI (เกินนั้นเลื่อนดูในแผ่น) + เผื่อขอบ/ระยะห่าง
+            local y = math.min(#list, 5) * 32 + 10
 
             for i,v in pairs(dropList) do
                 if v ~= dropDown and v.toggled then 
