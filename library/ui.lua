@@ -887,6 +887,7 @@ do
                     if v.toggled then
                     
                         v.toggled = false
+                        v.object.ZIndex = 1
                         if not v.usesToggles then
                             v.label.TextTransparency = 0
                             v.label.Text = v.l[v.f]
@@ -941,12 +942,11 @@ do
             end
         end
 
-        newTab.button.InputBegan:Connect(function(input)
-            if isPrimaryInput(input) then
-                spawn(function()
-                    tab.spFuncs:SimClck()
-                end)
-            end
+        -- ตัวรับทัชทับปุ่มแท็บเต็มพื้นที่: กดตรง ๆ ติดทันที เหมือน toggle
+        onPress(newTab.button, function()
+            spawn(function()
+                tab.spFuncs:SimClck()
+            end)
         end)
 
         self:resize()
@@ -2491,12 +2491,13 @@ do
             Parent = newDropdown.border;
         })
 
+        -- รายการดรอปดาว์น = แผ่นลอยทับด้านล่าง (ไม่ดัน UI ให้ขยาย) สูงสุด 5 แถว เลื่อนดูได้ แบบ Wind UI
         local container = library:createElement("Frame", {
             Name = "containerFrame";
             Size = UDim2.new(1, 0, 0, 0);
+            Position = UDim2.new(0, 0, 0, 31);
             BackgroundTransparency = 1;
-            LayoutOrder = self:getOrder();
-            ZIndex = 1;
+            ZIndex = 20;
             ClipsDescendants = true;
             library:createElement("ImageLabel", {
                 Name = "containerBorder";
@@ -2539,7 +2540,7 @@ do
                     })
                 })
             });
-            Parent = self.container;
+            Parent = newDropdown;
         })
 
         if options.icon then
@@ -2634,6 +2635,7 @@ do
 
 
                     dropDown.arrow.Rotation = 0
+                    newDropdown.ZIndex = 1
                     container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
                     
                     location[flag] = tostring(listItem.Text)
@@ -2650,7 +2652,8 @@ do
             end
         end
 
-        onPress(newDropdown.border, function()
+        -- ตัวรับทัชอยู่ในปุ่มโดยตรง (แบบเดียวกับ toggle ที่กดได้แล้ว)
+        onPress(button, function()
             dropDown.toggled = not dropDown.toggled
 
             if not useToggles then
@@ -2672,6 +2675,7 @@ do
             for i,v in pairs(dropList) do
                 if v ~= dropDown and v.toggled then 
                     v.toggled = false
+                    v.object.ZIndex = 1
                     
                     v.arrow.Rotation = 0;
                     v.container.Parent.Parent.Parent:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
@@ -2685,6 +2689,7 @@ do
             end
 
             dropDown.arrow.Rotation = (dropDown.toggled and 180) or 0
+            newDropdown.ZIndex = (dropDown.toggled and 30) or 1
             container:TweenSize(UDim2.new(1, 0, 0, (dropDown.toggled and y) or 0), (dropDown.toggled and "Out") or "In", "Quad", 0.15, true)
         end)
 
@@ -2699,6 +2704,7 @@ do
                 dropDown.label.Text = location[flag]
             end
 
+            newDropdown.ZIndex = 1
             container:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Quad", 0.15, true)
 
             dropDown.arrow.Rotation = 0
