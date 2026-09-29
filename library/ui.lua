@@ -2655,7 +2655,7 @@ do
                     applyVisual(location[v.flag])
                 else
                     for _, other in pairs(dropDown.container:GetChildren()) do
-                        if other:IsA("TextButton") and other ~= listItem then
+                        if other:IsA("GuiButton") and other ~= listItem then
                             other.ImageTransparency = 1
                             other.title.TextTransparency = 0.4
                             other.mark.TextTransparency = 1
@@ -2918,3 +2918,4 @@ do
 
     return library
 end
+d
