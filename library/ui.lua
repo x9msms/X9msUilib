@@ -2598,7 +2598,7 @@ do
 
         for i,v in pairs(list) do
             -- แถวตัวเลือกแบบ WindUI (TabItem): แถมมน, ตัวหนังสือจางเมื่อยังไม่เลือก, เลือกแล้วสว่าง + ✓ แดง
-            local listItem = library:createElement("TextButton", {
+            local listItem = library:createElement("ImageButton", {
                 Name = v.Name;
                 Size = UDim2.new(1, -8, 0, 30);
                 BackgroundTransparency = 1;
@@ -2918,4 +2918,3 @@ do
 
     return library
 end
-d
