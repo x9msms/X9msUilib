@@ -439,43 +439,37 @@ do
             or input.UserInputType == Enum.UserInputType.Touch
     end
 
-    -- วิธีคลิกแบบ WindUI (ตาม src): MouseButton1Click บนปุ่ม ทับด้วยตัวรับทัชเต็มพื้นที่
-    -- ยิงคู่ (คลิก + แตะลง) และกันยิงซ้ำใน 0.3 วิ → แตะตรง ๆ ติดทุกอุปกรณ์ ไม่ต้องลาก
-    local lastPress = 0
-
-    local function firePress(callback)
-        local now = tick()
-        if now - lastPress < 0.3 then return end
-        lastPress = now
-        callback()
-    end
-
+    -- ปุ่มกด = "Hitbox" แบบ WindUI (จาก src): TextButton โปร่งใสเต็มพื้นที่ปุ่ม
+    -- คลิกผ่าน MouseButton1Click (+ แตะลงสำรอง) และกันยิงซ้ำ "ต่อปุ่ม" เท่านั้น
+    -- (ห้ามใช้ตัวจับเวลาตัวเดียวทั้งโปรแกรม — เคยกดปุ่มที่ 2 ภายใน 0.3 วิ แล้วโดนบล็อก)
     local function onPress(object, callback)
-        local catcher = Instance.new("TextButton")
-        catcher.Name = "tapCatcher"
-        catcher.Size = UDim2.new(1, 0, 1, 0)
-        catcher.Position = UDim2.new(0, 0, 0, 0)
-        catcher.BackgroundTransparency = 1
-        catcher.Text = ""
-        catcher.AutoButtonColor = false
-        catcher.BorderSizePixel = 0
-        catcher.ZIndex = 5
-        catcher.Parent = object
+        local lastFire = 0
 
-        catcher.MouseButton1Click:Connect(function()
-            firePress(callback)
-        end)
-
-        catcher.InputBegan:Connect(function(input)
-            if not isPrimaryInput(input) then return end
-            firePress(callback)
-        end)
-
-        if object:IsA("GuiButton") then
-            object.MouseButton1Click:Connect(function()
-                firePress(callback)
-            end)
+        local function fire()
+            local now = tick()
+            if now - lastFire < 0.25 then return end
+            lastFire = now
+            callback()
         end
+
+        local hitbox = Instance.new("TextButton")
+        hitbox.Name = "Hitbox"
+        hitbox.Size = UDim2.new(1, 0, 1, 0)
+        hitbox.BackgroundTransparency = 1
+        hitbox.Position = UDim2.new(0.5, 0, 0.5, 0)
+        hitbox.AnchorPoint = Vector2.new(0.5, 0.5)
+        hitbox.Text = ""
+        hitbox.AutoButtonColor = false
+        hitbox.BorderSizePixel = 0
+        hitbox.ZIndex = 5
+        hitbox.Parent = object
+
+        hitbox.MouseButton1Click:Connect(fire)
+
+        hitbox.InputBegan:Connect(function(input)
+            if not isPrimaryInput(input) then return end
+            fire()
+        end)
     end
 
     local function toGuiPosition(screenPos)
@@ -1136,11 +1130,17 @@ do
             Parent = self.container;
         })
 
-        local textBox = newTextBox.border.frame.textBorder.textFrame.textInput
+        local textFrame = newTextBox.border.frame.textBorder.textFrame
+        local textBox = textFrame.textInput
 
-        textBox.FocusLost:Connect(function(enterPressed)
-            if not enterPressed then return end
+        -- แตะที่กล่อง = เข้าโฟกัสทันที (มือถือเปิดคีย์บอร์ด)
+        textFrame.InputBegan:Connect(function(input)
+            if not isPrimaryInput(input) then return end
+            textBox:CaptureFocus()
+        end)
 
+        -- พิมพ์เสร็จ (กด Enter หรือ Done บนมือถือ) = บันทึกค่า + แจ้ง callback
+        textBox.FocusLost:Connect(function()
             location[flag] = textBox.Text
             callback(location[flag])
         end)
