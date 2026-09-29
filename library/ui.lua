@@ -1,6 +1,7 @@
 local DEFAULT_THEME_COLOR = Color3.fromRGB(255, 59, 59) -- สีธีมเริ่มต้น (สีแดง)
 
 local library = {
+    version = "windui-3";
     toggled = true;
     binding = false;
     binds = {};
