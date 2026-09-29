@@ -438,37 +438,13 @@ do
             or input.UserInputType == Enum.UserInputType.Touch
     end
 
-    -- กด = ทำงานทันทีตอนแตะลง (ทั้งเมาส์และนิ้ว) กันยิงซ้ำ 1 ครั้งต่อการสัมผัส
-    -- บนมือถือแตะจะโดน "ชิ้นที่อยู่ชั้นบนสุด" (title/ไอคอน/ช่องติ๊ก) ที่ทับอยู่
-    -- จึงต้องผูกกับทุกชิ้นในปุ่ม ไม่งั้นต้องลากให้โดนพื้นที่ว่างถึงจะติด
-    local pressConsumed = {}
+    -- กด = ทำงานทันทีตอนแตะลง (ทั้งเมาส์และนิ้ว) ด้วยวิธี "เช็คจุดสัมผัส"
+    -- ใช้ตำแหน่งนิ้ว/เมาส์เทียบกับกรอบปุ่มแทนการพึ่ง event ของชิ้นที่ทับอยู่
+    -- (title/ไอคอน/ช่องติ๊กที่โปร่งใสจะไม่แย่งทัชไปเงียบ ๆ อีก)
+    local pressRegions = {}
 
     local function onPress(object, callback)
-        local function hook(target)
-            if not target:IsA("GuiObject") then return end
-
-            target.InputBegan:Connect(function(input)
-                if not isPrimaryInput(input) then return end
-                if pressConsumed[input] then return end
-
-                pressConsumed[input] = true
-                callback()
-
-                local endConn
-                endConn = userInputService.InputEnded:Connect(function(ended)
-                    if ended == input then
-                        pressConsumed[input] = nil
-                        endConn:Disconnect()
-                    end
-                end)
-            end)
-        end
-
-        hook(object)
-
-        for _, desc in ipairs(object:GetDescendants()) do
-            hook(desc)
-        end
+        table.insert(pressRegions, {obj = object, callback = callback})
     end
 
     local function toGuiPosition(screenPos)
@@ -489,6 +465,59 @@ do
 
         return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
     end
+
+    -- จุดต้องยังมองเห็นอยู่: ไม่อยู่ในแท็บที่ซ่อน และไม่หลุดนอกกรอบที่ตัดขอบ (ScrollingFrame)
+    local function regionVisibleAt(obj, mouse)
+        local current = obj
+
+        while current do
+            if current:IsA("GuiObject") then
+                if not current.Visible then
+                    return false
+                end
+
+                if current.ClipsDescendants then
+                    local rx1 = current.AbsolutePosition.X
+                    local ry1 = current.AbsolutePosition.Y
+                    local rx2 = rx1 + current.AbsoluteSize.X
+                    local ry2 = ry1 + current.AbsoluteSize.Y
+
+                    if mouse.X < rx1 or mouse.X > rx2 or mouse.Y < ry1 or mouse.Y > ry2 then
+                        return false
+                    end
+                end
+            end
+
+            current = current.Parent
+        end
+
+        return true
+    end
+
+    -- เราเตอร์กลาง: แตะ/คลิกที่ไหน = หาปุ่มที่ "กรอบเล็กสุด" ที่ครอบจุดนั้น แล้วสั่งทำงานทันที
+    userInputService.InputBegan:Connect(function(input)
+        if not isPrimaryInput(input) then return end
+
+        local mouse = toGuiPosition(input.Position)
+        local best, bestArea = nil, math.huge
+
+        for _, region in ipairs(pressRegions) do
+            local obj = region.obj
+
+            if obj and obj.Parent and isInGui(obj, input.Position) and regionVisibleAt(obj, mouse) then
+                local area = obj.AbsoluteSize.X * obj.AbsoluteSize.Y
+
+                if area < bestArea then
+                    best = region
+                    bestArea = area
+                end
+            end
+        end
+
+        if best then
+            best.callback()
+        end
+    end)
 
     -- แตะ/คลิก: ใช้ InputBegan + isPrimaryInput ทันที (รองรับทั้งเมาส์และนิ้ว)
 
